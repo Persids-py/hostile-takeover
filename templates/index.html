@@ -542,6 +542,31 @@ button{cursor:pointer;font-family:inherit}
 #hint-progress{margin-top:8px;height:2px;background:var(--border);border-radius:2px;overflow:hidden}
 #hint-bar{height:100%;background:var(--gold);width:100%;transition:width linear}
 
+/* ── ROOM CLOSED ── */
+#room-closed-overlay{
+  position:fixed;inset:0;background:#000e;
+  display:none;justify-content:center;align-items:center;
+  z-index:500;backdrop-filter:blur(8px);
+}
+#room-closed-overlay.visible{display:flex}
+#room-closed-box{
+  background:linear-gradient(145deg,#1a0f2e,#0d1220);
+  border:1px solid #7f1d1d;border-top:3px solid #ef4444;
+  border-radius:16px;padding:40px 48px;text-align:center;
+  box-shadow:0 20px 60px #0009;
+  display:flex;flex-direction:column;align-items:center;gap:16px;
+  max-width:380px;width:90%;
+}
+#room-closed-icon{font-size:3rem}
+#room-closed-title{color:#f87171;font-size:1.2rem;font-weight:700;letter-spacing:1px}
+#room-closed-msg{color:#94a3b8;font-size:.88rem;line-height:1.6}
+#room-closed-btn{
+  margin-top:8px;padding:12px 32px;border-radius:10px;border:none;
+  background:#166534;color:#fff;font-size:.95rem;font-weight:700;
+  cursor:pointer;transition:background .15s;font-family:inherit;
+}
+#room-closed-btn:hover{background:#16a34a}
+
 /* ── GAME OVER ── */
 #gameover-overlay{
   position:fixed;inset:0;background:#000d;
@@ -735,6 +760,15 @@ button{cursor:pointer;font-family:inherit}
 </div>
 
 <!-- Game over overlay -->
+<div id="room-closed-overlay">
+  <div id="room-closed-box">
+    <div id="room-closed-icon">🚫</div>
+    <div id="room-closed-title">房間已關閉</div>
+    <div id="room-closed-msg">此房間已被管理員關閉。<br>感謝你的遊玩！</div>
+    <button id="room-closed-btn" onclick="location.reload()">回大廳</button>
+  </div>
+</div>
+
 <div id="gameover-overlay">
   <div id="gameover-box">
     <h1>遊戲結束</h1>
@@ -1176,6 +1210,14 @@ socket.on('state',d=>{
 });
 
 socket.on('error',d=>{showError(d.msg);});
+
+socket.on('room_closed',d=>{
+  const msg = d.kicked
+    ? '你已被管理員移出此房間。'
+    : '此房間已被管理員關閉。<br>感謝你的遊玩！';
+  document.getElementById('room-closed-msg').innerHTML = msg;
+  document.getElementById('room-closed-overlay').classList.add('visible');
+});
 
 socket.on('admin_broadcast',d=>{
   const box = document.createElement('div');

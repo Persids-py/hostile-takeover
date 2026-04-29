@@ -160,7 +160,7 @@ def admin_close_room(code):
     r = rooms[code]
     for sid in list(r["pid_to_sid"].values()):
         if not sid.startswith("bot_"):
-            socketio.emit("error", {"msg": "⚠️ 管理員已關閉此房間"}, to=sid)
+            socketio.emit("room_closed", {}, to=sid)
     del rooms[code]
     return jsonify({"ok": True})
 
@@ -172,7 +172,8 @@ def admin_kick(code, pid):
         return jsonify({"ok": False, "msg": "房間不存在"})
     sid = r["pid_to_sid"].get(pid)
     if sid and not sid.startswith("bot_"):
-        socketio.emit("error", {"msg": "⚠️ 你已被管理員踢出房間"}, to=sid)
+        socketio.emit("room_closed", {"kicked": True}, to=sid)
+        socketio.sleep(1)
         socketio.disconnect(sid)
     return jsonify({"ok": True})
 
