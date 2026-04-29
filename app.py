@@ -338,7 +338,8 @@ def on_disconnect():
                     G.remove_player(g, pid)
                     del r["sid_to_pid"][sid]
                     del r["pid_to_sid"][pid]
-                if not g["players"]:
+                remaining_humans = [s for s in r["sid_to_pid"] if not s.startswith("bot_")]
+                if not remaining_humans:
                     del rooms[code]
                 else:
                     broadcast_state(code)
