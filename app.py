@@ -357,7 +357,7 @@ def on_disconnect():
 def _schedule_draft_timeout(code: str, timeout: float = 30.0):
     """30 秒後若仍在抽牌階段，對剩餘玩家自動隨機分配身份。"""
     def _run():
-        time.sleep(timeout)
+        socketio.sleep(timeout)
         r = get_room(code)
         if not r:
             return
@@ -372,12 +372,12 @@ def _schedule_draft_timeout(code: str, timeout: float = 30.0):
             _schedule_bot(code, delay=random.uniform(2, 5))
         else:
             _schedule_bot(code)
-    threading.Thread(target=_run, daemon=True).start()
+    socketio.start_background_task(_run)
 
 def _schedule_role_draft_timeout(code: str, timeout: float = 30.0):
     """30 秒後若仍在選角色牌階段，對剩餘玩家自動隨機分配角色。"""
     def _run():
-        time.sleep(timeout)
+        socketio.sleep(timeout)
         r = get_room(code)
         if not r:
             return
@@ -388,7 +388,7 @@ def _schedule_role_draft_timeout(code: str, timeout: float = 30.0):
             G.auto_pick_remaining_roles(g)
         broadcast_state(code)
         _schedule_bot(code)
-    threading.Thread(target=_run, daemon=True).start()
+    socketio.start_background_task(_run)
 
 # ── Bot 自動行動調度 ──────────────────────────────────────────────────────────
 
@@ -414,7 +414,7 @@ def _schedule_bot(code: str, delay: float | None = None):
     actual_delay = delay if delay is not None else random.uniform(0.7, 1.4)
 
     def _run():
-        time.sleep(actual_delay)
+        socketio.sleep(actual_delay)
         r2 = get_room(code)
         if not r2:
             return
@@ -438,7 +438,7 @@ def _schedule_bot(code: str, delay: float | None = None):
                 next_delay = None
             _schedule_bot(code, delay=next_delay)  # 繼續看下一步是否還需要 bot 行動
 
-    threading.Thread(target=_run, daemon=True).start()
+    socketio.start_background_task(_run)
 
 
 def _bot_tick(r: dict, code: str) -> bool:
