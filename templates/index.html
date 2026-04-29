@@ -808,7 +808,7 @@ function _autoTimeoutAction() {
 }
 
 // ── 新手提示系統 ────────────────────────────────────────────────────────────
-const _tutorialMode = new URLSearchParams(window.location.search).get('solo') === '1';
+let _tutorialMode = new URLSearchParams(window.location.search).get('solo') === '1';
 const _shownHints = new Set();
 let _hintTimer = null;
 const HINT_DURATION = 8000;
@@ -1084,6 +1084,7 @@ function createRoom(){
 function soloStart(){
   const name = document.getElementById('name-input').value.trim();
   if(!name){return showLobbyError('請輸入名稱');}
+  _tutorialMode = true;
   socket.emit('solo_start',{name, bot_count:3});
 }
 
