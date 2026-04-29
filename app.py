@@ -297,6 +297,32 @@ def on_solo_start(data):
     _schedule_draft_timeout(code)
     _schedule_bot(code, delay=random.uniform(2, 6))
 
+@socketio.on("restart_game")
+def on_restart_game(_):
+    code, pid, r, g = _get_context()
+    if not r:
+        return
+    # 只有房主或單人模式可重開
+    is_solo = sum(1 for p in g["players"].values() if not p.get("is_bot")) == 1
+    if not is_solo and g["order"][0] != pid:
+        return emit_error("只有房主可以重開遊戲")
+    new_g = G.new_game()
+    old_order = g["order"][:]
+    for old_pid in old_order:
+        old_p = g["players"][old_pid]
+        G.add_player(new_g, old_pid, old_p["name"])
+        if old_p.get("is_bot"):
+            new_g["players"][old_pid]["is_bot"] = True
+    with r["lock"]:
+        r["game"] = new_g
+        r["bot_timer_active"] = False
+        ok, msg = G.start_game(new_g)
+    if not ok:
+        return emit_error(msg)
+    broadcast_state(code)
+    _schedule_draft_timeout(code)
+    _schedule_bot(code, delay=random.uniform(2, 6))
+
 @socketio.on("start_game")
 def on_start_game(data):
     code, pid, r, g = _get_context()
@@ -416,6 +442,19 @@ def on_chat(data):
         return
     name = g["players"][pid]["name"] if pid in g["players"] else "?"
     socketio.emit("chat_msg", {"name": name, "msg": msg}, room=code)
+
+ALLOWED_EMOJIS = {"👍","😱","🤣","😤","🎉","💀"}
+
+@socketio.on("emoji_reaction")
+def on_emoji_reaction(data):
+    code, pid, r, g = _get_context()
+    if not r:
+        return
+    emoji = data.get("emoji", "")
+    if emoji not in ALLOWED_EMOJIS:
+        return
+    name = g["players"][pid]["name"] if pid in g["players"] else "?"
+    socketio.emit("emoji_reaction", {"pid": pid, "name": name, "emoji": emoji}, room=code)
 
 @socketio.on("disconnect")
 def on_disconnect():

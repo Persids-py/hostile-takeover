@@ -191,7 +191,9 @@ body{
   font-size:1rem;color:var(--gold);font-weight:600;text-align:center;
   background:#1a1300;border:1px solid var(--gold-dim);
   border-radius:8px;padding:10px 16px;max-width:380px;width:100%;
+  cursor:pointer;user-select:none;transition:background .15s;
 }
+#room-info:hover{background:#2a2000}
 #players-list{list-style:none;display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 #players-list li{
   background:var(--surface2);border:1px solid var(--border2);
@@ -487,6 +489,27 @@ button{cursor:pointer;font-family:inherit}
   margin-top:4px;padding-top:5px;
 }
 
+/* ── EMOJI ── */
+#emoji-bar{
+  display:flex;gap:4px;padding:6px 8px;
+  border-top:1px solid var(--border);justify-content:center;flex-wrap:wrap;
+}
+.btn-emoji{
+  background:none;border:1px solid var(--border2);border-radius:8px;
+  padding:4px 7px;font-size:1.1rem;cursor:pointer;
+  transition:background .12s,transform .1s;line-height:1;
+}
+.btn-emoji:hover{background:var(--surface2);transform:scale(1.2)}
+.btn-emoji:active{transform:scale(0.95)}
+@keyframes emojiFloat{
+  0%{opacity:1;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-80px) scale(1.4)}
+}
+.emoji-float{
+  position:absolute;font-size:1.6rem;pointer-events:none;
+  animation:emojiFloat 1.4s ease-out forwards;z-index:200;
+}
+
 .chat-area{border-top:1px solid var(--border);padding:8px}
 #chat-log{height:70px;overflow-y:auto;margin-bottom:6px}
 .chat-msg{font-size:.74rem;color:var(--text-muted);padding:1px 0}
@@ -601,6 +624,72 @@ button{cursor:pointer;font-family:inherit}
 }
 #gameover-box h1{color:var(--gold);font-size:2rem;margin-bottom:12px;text-shadow:0 0 20px #f0c04055}
 #gameover-box p{color:var(--text);font-size:.93rem;margin-bottom:12px;line-height:1.5}
+
+/* ── MOBILE RWD ── */
+@media(max-width:768px){
+  /* Header */
+  #header h1{font-size:1.1rem;letter-spacing:1px}
+  #header-sub{display:none}
+
+  /* Landing */
+  .landing-title{font-size:2.6rem}
+  .landing-btns{max-width:90%}
+  .btn-landing{font-size:.95rem;padding:14px 20px}
+
+  /* Lobby */
+  .lobby-card{padding:22px 18px}
+
+  /* Game layout: hide sidebar, stack vertically */
+  #game{height:auto;min-height:100vh}
+  .game-area{grid-template-columns:1fr}
+  .sidebar{display:none}
+
+  /* Show mobile log */
+  #mobile-log{display:block}
+
+  /* Players grid: 2 columns */
+  #players-area{grid-template-columns:1fr 1fr}
+
+  /* Player panel: stack vertically on mobile */
+  .player-panels{grid-template-columns:1fr}
+  .panel-right{border-left:none;border-top:1px solid var(--border);padding-left:0;padding-top:10px;margin-top:4px}
+
+  /* Transit banner */
+  .transit-row{flex-direction:column;gap:6px}
+
+  /* Hand cards: horizontal scroll */
+  #hand-cards{flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;
+    -webkit-overflow-scrolling:touch;}
+  #hand-cards::-webkit-scrollbar{height:4px}
+  #hand-cards::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+  .card{min-width:112px;width:112px;min-height:130px;font-size:.82rem}
+  .card-name{font-size:.8rem}
+  .card-desc{font-size:.62rem}
+
+  /* Buttons bigger for touch */
+  .btn-sm{padding:9px 16px;font-size:.85rem}
+  .btn-primary,.btn-secondary{padding:12px 20px}
+
+  /* Hint box: full width at top */
+  #hint-box{left:10px;right:10px;top:60px;max-width:none}
+  #hint-replay-btn{right:16px;bottom:80px}
+
+  /* Response overlay */
+  #response-box{padding:16px;gap:10px}
+
+  /* Ref modal */
+  #ref-box{width:95vw;height:85vh;padding:16px}
+
+  /* Game over */
+  #gameover-box{padding:28px 20px;margin:16px}
+  #gameover-box h1{font-size:1.5rem}
+}
+
+@media(max-width:480px){
+  /* Tiny phones: single column players */
+  #players-area{grid-template-columns:1fr}
+  .landing-title{font-size:2rem}
+}
 </style>
 </head>
 <body>
@@ -669,7 +758,7 @@ button{cursor:pointer;font-family:inherit}
     <button id="back-to-landing" class="btn-secondary" style="font-size:.8rem;margin-top:2px" onclick="showLanding()">← 返回</button>
   </div>
 
-  <div id="room-info" style="display:none;max-width:380px;width:100%"></div>
+  <div id="room-info" style="display:none;max-width:380px;width:100%" onclick="copyRoomCode()"></div>
   <ul id="players-list"></ul>
 
   <div id="lobby-actions" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:380px">
@@ -694,11 +783,24 @@ button{cursor:pointer;font-family:inherit}
         <div class="transit-actions" id="transit-actions"></div>
       </div>
       <div id="players-area"></div>
+      <!-- 手機版 log 收合區 -->
+      <details id="mobile-log" style="display:none;margin-top:8px">
+        <summary style="color:var(--text-muted);font-size:.78rem;cursor:pointer;padding:6px 0">📋 遊戲紀錄</summary>
+        <div id="mobile-log-area" style="max-height:180px;overflow-y:auto;font-size:.74rem;color:var(--text-muted);line-height:1.7;padding:6px 0"></div>
+      </details>
     </div>
     <!-- Sidebar -->
     <div class="sidebar">
       <div class="sidebar-title">遊戲紀錄</div>
       <div class="log-area" id="log-area"></div>
+      <div id="emoji-bar">
+        <button class="btn-emoji" onclick="sendEmoji('👍')">👍</button>
+        <button class="btn-emoji" onclick="sendEmoji('😱')">😱</button>
+        <button class="btn-emoji" onclick="sendEmoji('🤣')">🤣</button>
+        <button class="btn-emoji" onclick="sendEmoji('😤')">😤</button>
+        <button class="btn-emoji" onclick="sendEmoji('🎉')">🎉</button>
+        <button class="btn-emoji" onclick="sendEmoji('💀')">💀</button>
+      </div>
       <div class="chat-area">
         <div id="chat-log"></div>
         <div id="chat-input-row">
@@ -795,7 +897,10 @@ button{cursor:pointer;font-family:inherit}
     <h1>遊戲結束</h1>
     <p id="gameover-reason"></p>
     <p id="gameover-winners" style="color:var(--gold);font-size:1.1rem;font-weight:700;margin-bottom:24px"></p>
-    <button class="btn-primary" style="padding:11px 36px;font-size:1rem;border-radius:10px" onclick="location.reload()">返回大廳</button>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button id="btn-restart" class="btn-primary" style="padding:11px 28px;font-size:1rem;border-radius:10px;background:#6d28d9" onclick="restartGame()">🔁 再來一局</button>
+      <button class="btn-secondary" style="padding:11px 28px;font-size:1rem;border-radius:10px" onclick="location.reload()">返回大廳</button>
+    </div>
   </div>
 </div>
 
@@ -805,6 +910,7 @@ const socket = io();
 let myPid = null;
 let roomCode = null;
 let state = null;
+let isSolo = false;
 let selectedCardIid = null;
 let discardMode = false;
 let discardSelected = [];
@@ -1237,6 +1343,16 @@ function showLobbyError(msg){
   setTimeout(()=>document.getElementById('lobby-error').textContent='',3000);
 }
 
+function copyRoomCode(){
+  if(!roomCode) return;
+  navigator.clipboard.writeText(roomCode).then(()=>{
+    const el = document.getElementById('room-info');
+    const prev = el.textContent;
+    el.textContent = '✅ 已複製！';
+    setTimeout(()=>{ el.textContent = prev; }, 1500);
+  });
+}
+
 // ── Socket 事件 ───────────────────────────────────────────────────────────
 
 function _enterRoom(){
@@ -1248,9 +1364,9 @@ function _enterRoom(){
 socket.on('room_created',d=>{
   myPid=d.pid; roomCode=d.room_code;
   _enterRoom();
-  if(d.solo) return; // 單人模式直接等 state，不顯示大廳 UI
+  if(d.solo){ isSolo=true; return; } // 單人模式直接等 state，不顯示大廳 UI
   document.getElementById('room-info').style.display='block';
-  document.getElementById('room-info').textContent=`房間代碼：${roomCode}（分享給朋友）`;
+  document.getElementById('room-info').textContent=`📋 ${roomCode} — 點此複製代碼`;
   document.getElementById('lobby-actions').style.display='flex';
 });
 
@@ -1272,7 +1388,7 @@ socket.on('room_joined',d=>{
   myPid=d.pid; roomCode=d.room_code;
   _enterRoom();
   document.getElementById('room-info').style.display='block';
-  document.getElementById('room-info').textContent=`已加入房間：${roomCode}`;
+  document.getElementById('room-info').textContent=`📋 ${roomCode} — 點此複製代碼`;
 });
 
 socket.on('state',d=>{
@@ -2143,6 +2259,9 @@ function renderLog(d){
     el.appendChild(div);
   });
   el.scrollTop=el.scrollHeight;
+  // 同步到手機版 log
+  const mob=document.getElementById('mobile-log-area');
+  if(mob) mob.innerHTML=d.log.slice(-30).map(m=>`<div>${m}</div>`).join('');
 }
 
 function renderStatus(d){
@@ -2379,6 +2498,14 @@ function showGameOver(d){
   const winnerNames=d.winner_pids.map(pid=>d.players.find(p=>p.pid===pid)?.name||pid);
   document.getElementById('gameover-winners').textContent=
     winnerNames.length?`🏆 獲勝者：${winnerNames.join('、')}`:'';
+  // 只有主辦者或單人模式才能再來一局
+  const isHost = d.players.length>0 && d.players[0].pid===myPid;
+  document.getElementById('btn-restart').style.display = (isSolo||isHost)?'inline-block':'none';
+}
+
+function restartGame(){
+  document.getElementById('gameover-overlay').style.display='none';
+  socket.emit('restart_game',{});
 }
 
 // ── 聊天 ─────────────────────────────────────────────────────────────────
@@ -2390,6 +2517,40 @@ function sendChat(){
   socket.emit('chat',{msg});
   input.value='';
 }
+
+let _emojiCooldown = false;
+function sendEmoji(emoji){
+  if(_emojiCooldown) return;
+  _emojiCooldown = true;
+  setTimeout(()=>_emojiCooldown=false, 1500);
+  socket.emit('emoji_reaction',{emoji});
+}
+
+function _showEmojiFloat(pid, emoji){
+  // 找到對應玩家的 player-row 元素
+  const row = document.querySelector(`.player-row[data-pid="${pid}"]`);
+  const anchor = row || document.getElementById('players-area');
+  if(!anchor) return;
+  const rect = anchor.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'emoji-float';
+  el.textContent = emoji;
+  el.style.left = (rect.left + rect.width/2 - 16) + 'px';
+  el.style.top  = (rect.top + rect.height/2) + 'px';
+  document.body.appendChild(el);
+  setTimeout(()=> el.remove(), 1500);
+}
+
+socket.on('emoji_reaction', d=>{
+  _showEmojiFloat(d.pid, d.emoji);
+  // 也在聊天區顯示一行
+  const log = document.getElementById('chat-log');
+  const div = document.createElement('div');
+  div.className = 'chat-msg';
+  div.innerHTML = `<span class="cn">${d.name}</span>：${d.emoji}`;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+});
 
 // ── 工具函式 ──────────────────────────────────────────────────────────────
 
