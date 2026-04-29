@@ -1,8 +1,5 @@
 # app.py — 惡意併購 伺服器端（Flask + Socket.IO）
 
-import eventlet
-eventlet.monkey_patch()
-
 import threading
 import time
 import random
@@ -23,7 +20,7 @@ def _resource(rel: str) -> str:
 
 app = Flask(__name__, template_folder=_resource("templates"))
 app.config["SECRET_KEY"] = "hostile-takeover-2025"
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="gevent")
 
 # ── 房間管理 ──────────────────────────────────────────────────────────────────
 # rooms[code] = {
