@@ -523,6 +523,25 @@ button{cursor:pointer;font-family:inherit}
 #error-toast{color:#fca5a5;font-weight:600}
 
 /* ── TUTORIAL HINT ── */
+.hint-highlight{
+  outline:2px solid var(--gold) !important;
+  outline-offset:5px;border-radius:6px;
+  animation:hintPulse 1.2s ease-in-out infinite;
+}
+@keyframes hintPulse{
+  0%,100%{outline-color:var(--gold);box-shadow:0 0 0 0 #f0c04020}
+  50%{outline-color:#f0c04080;box-shadow:0 0 0 6px #f0c04010}
+}
+#hint-replay-btn{
+  position:fixed;bottom:115px;right:295px;z-index:250;
+  width:34px;height:34px;border-radius:50%;
+  border:1px solid var(--gold-dim);background:#1a1300;
+  color:var(--gold);font-size:1rem;cursor:pointer;
+  display:none;align-items:center;justify-content:center;
+  box-shadow:0 2px 8px #0006;transition:background .15s;
+}
+#hint-replay-btn:hover{background:#2a2000}
+
 #hint-box{
   position:fixed;top:65px;right:290px;z-index:300;
   background:linear-gradient(135deg,#0d1e38,#1a0f2e);
@@ -720,6 +739,8 @@ button{cursor:pointer;font-family:inherit}
 </div>
 
 <!-- Tutorial Hint Box -->
+<button id="hint-replay-btn" onclick="replayLastHint()" title="重看上一條提示">💡</button>
+
 <div id="hint-box">
   <div id="hint-box-header">
     <span>💡 新手提示</span>
@@ -845,25 +866,48 @@ function _autoTimeoutAction() {
 let _tutorialMode = new URLSearchParams(window.location.search).get('solo') === '1';
 const _shownHints = new Set();
 let _hintTimer = null;
+let _hintQueue = [];   // [{id, priority}]
+let _hintActive = false;
+let _lastHintId = null;
+let _highlightEl = null;
 const HINT_DURATION = 8000;
 
 const HINTS = {
   draft_identity: '這是抽身份牌階段！點選任一張牌背來抽取你的秘密身份。身份只有你自己看得到，千萬不要告訴別人！',
   draft_role:     '這是選角色牌階段！每張角色牌都有獨特的技能和個人任務。選一張最符合你策略的角色，其他兩張會被放回去。',
-  my_turn:       '輪到你了！從下方手牌區選一張牌，然後點「傳出」送給下一位玩家。',
-  transmit_mode: '每張牌都有固定的傳遞方式：加密雲端（面朝下往右傳）、公開新聞稿（公開往右傳）、私人信件（傳給指定玩家，拒收退回自己）。',
-  got_blue:      '你收到了藍色機密！你的陣營目標：集齊 3 張藍色機密即可獲勝。',
-  got_red:       '你收到了紅色機密！你的陣營目標：集齊 3 張紅色機密即可獲勝。',
-  got_black:     '⚠️ 你收到了有毒資產（黑牌）！累積 3 張就會破產出局，小心！可以用「銷毀帳冊」或「債務轉移」處理掉它。',
-  got_dual:      '你收到了雙色機密！它藍紅兩方都能計入，是很有價值的牌。',
-  black_danger:  '你已有 2 張黑牌，再接收一張就會破產！試著拒收黑牌，或用功能牌把它轉給別人。',
-  near_win:      '再差一張就能獲勝了！注意別讓對手阻止你接收關鍵機密。',
-  func_in_hand:  '你手上有功能牌（紫色邊框的牌）。點它可以在符合時機時發動特殊效果，不需要消耗傳牌次數。',
-  response_win:  '響應視窗出現了！你可以趁現在打出功能牌干預局面，或點「不響應」跳過。',
-  got_refuse:    '對方拒收了你的牌，它會繼續往下一位玩家傳過去。',
-  bankrupt:      '有玩家破產了！累積 3 張黑色機密會強制出局，身份也會被公開。',
-  discard:       '手牌超過上限，需要棄牌。點選你要丟棄的牌，然後確認。',
-  independent:   '你是獨立投資人，沒有隊友！囤積 6 張任意機密，或完成角色專屬任務，就能單獨獲勝。',
+  my_turn:        '輪到你了！從下方手牌區選一張牌，然後點「傳出」送給下一位玩家。',
+  transmit_mode:  '每張牌都有固定的傳遞方式：加密雲端（面朝下往右傳）、公開新聞稿（公開往右傳）、私人信件（傳給指定玩家，拒收退回自己）。',
+  got_blue:       '你收到了藍色機密！你的陣營目標：集齊 3 張藍色機密即可獲勝。',
+  got_red:        '你收到了紅色機密！你的陣營目標：集齊 3 張紅色機密即可獲勝。',
+  got_black:      '⚠️ 你收到了有毒資產（黑牌）！累積 3 張就會破產出局，小心！可以用「銷毀帳冊」或「債務轉移」處理掉它。',
+  got_dual:       '你收到了雙色機密！它藍紅兩方都能計入，是很有價值的牌。',
+  black_danger:   '🚨 你已有 2 張黑牌，再接收一張就會破產！試著拒收黑牌，或用功能牌把它轉給別人。',
+  near_win:       '✨ 再差一張就能獲勝了！注意別讓對手阻止你接收關鍵機密。',
+  func_in_hand:   '你手上有功能牌（紫色邊框的牌）。點它可以在符合時機時發動特殊效果，不需要消耗傳牌次數。',
+  response_win:   '響應視窗出現了！你可以趁現在打出功能牌干預局面，或點「不響應」跳過。',
+  got_refuse:     '對方拒收了你的牌，它會繼續往下一位玩家傳過去。',
+  bankrupt:       '有玩家破產了！累積 3 張黑色機密會強制出局，身份也會被公開。',
+  discard:        '手牌超過上限，需要棄牌。點選你要丟棄的牌，然後確認。',
+  independent:    '你是獨立投資人，沒有隊友！囤積 6 張任意機密，或完成角色專屬任務，就能單獨獲勝。',
+};
+
+// 優先級（越高越緊急，>=9 可插隊打斷目前提示）
+const HINT_PRIORITY = {
+  black_danger:10, discard:9, bankrupt:8,
+  response_win:7, my_turn:6, got_refuse:5, near_win:4,
+  got_black:3, got_blue:3, got_red:3, got_dual:3,
+  transmit_mode:2, func_in_hand:2, independent:2,
+  draft_identity:1, draft_role:1,
+};
+
+// 提示對應要高亮的 UI 元素
+const HINT_HIGHLIGHT = {
+  my_turn:      ()=>document.getElementById('my-hand'),
+  discard:      ()=>document.getElementById('my-hand'),
+  func_in_hand: ()=>document.getElementById('hand-cards'),
+  response_win: ()=>document.getElementById('transit-actions'),
+  got_refuse:   ()=>document.getElementById('transit-banner'),
+  transmit_mode:()=>document.getElementById('transit-banner'),
 };
 
 function showHint(id){
@@ -871,12 +915,39 @@ function showHint(id){
   if(_shownHints.has(id)) return;
   if(!HINTS[id]) return;
   _shownHints.add(id);
+
+  const priority = HINT_PRIORITY[id] || 1;
+  // 緊急提示（priority>=9）插隊打斷目前顯示中的提示
+  if(priority >= 9 && _hintActive){
+    clearTimeout(_hintTimer);
+    _clearHighlight();
+    _hintQueue.unshift({id, priority});
+    _hintActive = false;
+    _processHintQueue();
+  } else {
+    _hintQueue.push({id, priority});
+    _hintQueue.sort((a,b)=>b.priority - a.priority);
+    if(!_hintActive) _processHintQueue();
+  }
+}
+
+function _processHintQueue(){
+  if(!_hintQueue.length){ _hintActive=false; return; }
+  _hintActive = true;
+  const {id} = _hintQueue.shift();
+  _displayHint(id);
+}
+
+function _displayHint(id){
+  _lastHintId = id;
   clearTimeout(_hintTimer);
+  _clearHighlight();
+
   const box = document.getElementById('hint-box');
   const bar = document.getElementById('hint-bar');
   document.getElementById('hint-text').textContent = HINTS[id];
   box.classList.remove('visible');
-  void box.offsetWidth; // reflow to restart animation
+  void box.offsetWidth;
   box.classList.add('visible');
   bar.style.transition = 'none';
   bar.style.width = '100%';
@@ -884,12 +955,39 @@ function showHint(id){
     bar.style.transition = `width ${HINT_DURATION}ms linear`;
     bar.style.width = '0%';
   });
-  _hintTimer = setTimeout(()=> dismissHint(), HINT_DURATION);
+
+  // 高亮相關 UI 元素
+  const getEl = HINT_HIGHLIGHT[id];
+  if(getEl){ const el=getEl(); if(el){ el.classList.add('hint-highlight'); _highlightEl=el; } }
+
+  // 顯示重看按鈕
+  document.getElementById('hint-replay-btn').style.display = 'flex';
+
+  _hintTimer = setTimeout(()=>{
+    _clearHighlight();
+    document.getElementById('hint-box').classList.remove('visible');
+    _hintActive = false;
+    setTimeout(_processHintQueue, 350);
+  }, HINT_DURATION);
+}
+
+function _clearHighlight(){
+  if(_highlightEl){ _highlightEl.classList.remove('hint-highlight'); _highlightEl=null; }
 }
 
 function dismissHint(){
   clearTimeout(_hintTimer);
+  _clearHighlight();
   document.getElementById('hint-box').classList.remove('visible');
+  _hintActive = false;
+  setTimeout(_processHintQueue, 350);
+}
+
+function replayLastHint(){
+  if(!_lastHintId) return;
+  _shownHints.delete(_lastHintId);
+  _hintQueue.unshift({id:_lastHintId, priority:HINT_PRIORITY[_lastHintId]||1});
+  if(!_hintActive) _processHintQueue();
 }
 
 function _checkHints(d){
