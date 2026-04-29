@@ -130,9 +130,43 @@ body{
 .btn-role-skill:hover{background:#2e1860;border-color:#a855f7}
 .btn-role-skill:disabled{opacity:.4;cursor:not-allowed}
 
+/* ── LANDING ── */
+#landing{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:32px;
+  min-height:100vh;
+}
+.landing-title{
+  font-size:3.8rem;color:var(--gold);font-weight:800;
+  letter-spacing:4px;text-shadow:0 0 40px #f0c04055;
+  text-align:center;line-height:1.1;
+}
+.landing-sub{
+  font-size:1rem;color:var(--text-muted);letter-spacing:6px;
+  text-align:center;margin-top:-20px;
+}
+.landing-btns{
+  display:flex;flex-direction:column;gap:14px;
+  width:100%;max-width:340px;
+}
+.btn-landing{
+  padding:17px 24px;border-radius:12px;border:none;
+  font-size:1.05rem;font-weight:700;width:100%;cursor:pointer;
+  font-family:inherit;letter-spacing:1px;
+  transition:background .15s,transform .12s;
+}
+.btn-landing:hover{transform:translateY(-2px)}
+.btn-landing:active{transform:translateY(0)}
+.btn-landing-host{background:#166534;color:#fff}
+.btn-landing-host:hover{background:#16a34a}
+.btn-landing-join{background:var(--surface);color:var(--text);border:1px solid var(--border2)!important}
+.btn-landing-join:hover{background:var(--surface2)}
+.btn-landing-solo{background:#6d28d9;color:#fff}
+.btn-landing-solo:hover{background:var(--purple)}
+
 /* ── LOBBY ── */
 #lobby{
-  display:flex;flex-direction:column;align-items:center;
+  display:none;flex-direction:column;align-items:center;
   justify-content:center;gap:20px;
   padding:48px 20px;min-height:calc(100vh - 55px);
 }
@@ -527,7 +561,7 @@ button{cursor:pointer;font-family:inherit}
 </head>
 <body>
 
-<div id="header">
+<div id="header" style="display:none">
   <h1>惡意併購 · Hostile Takeover</h1>
   <div id="header-sub">多人秘密角色卡牌遊戲</div>
 </div>
@@ -562,19 +596,33 @@ button{cursor:pointer;font-family:inherit}
   <div id="role-draft-status" style="color:var(--text-dim);font-size:.85rem;text-align:center"></div>
 </div>
 
+<!-- LANDING -->
+<div id="landing">
+  <div class="landing-title">惡意併購</div>
+  <div class="landing-sub">Hostile Takeover</div>
+  <div class="landing-btns">
+    <button class="btn-landing btn-landing-host" onclick="goLobby('host')">🏠 主辦遊戲</button>
+    <button class="btn-landing btn-landing-join" onclick="goLobby('join')">🌐 加入遊戲</button>
+    <button class="btn-landing btn-landing-solo" onclick="goLobby('solo')">🤖 單人練習</button>
+  </div>
+</div>
+
 <!-- LOBBY -->
 <div id="lobby">
   <div class="lobby-card">
-    <h2>加入遊戲</h2>
+    <h2 id="lobby-mode-title">主辦遊戲</h2>
     <input class="lobby-input" id="name-input" placeholder="輸入你的名稱" maxlength="16">
-    <div class="lobby-btns">
-      <button class="btn-primary" onclick="createRoom()">建立房間</button>
-      <button class="btn-secondary" onclick="showJoin()">加入房間</button>
+    <div id="host-row" style="display:none">
+      <button class="btn-primary" style="width:100%" onclick="createRoom()">建立房間</button>
     </div>
     <div id="join-row" style="display:none;flex-direction:column;gap:8px">
       <input class="lobby-input" id="code-input" placeholder="房間代碼（4碼大寫）" maxlength="4" style="text-transform:uppercase">
       <button class="btn-primary" onclick="joinRoom()">確認加入</button>
     </div>
+    <div id="solo-row" style="display:none">
+      <button class="btn-primary" style="width:100%;background:#6d28d9" onclick="soloStart()">開始練習</button>
+    </div>
+    <button id="back-to-landing" class="btn-secondary" style="font-size:.8rem;margin-top:2px" onclick="showLanding()">← 返回</button>
   </div>
 
   <div id="room-info" style="display:none;max-width:380px;width:100%"></div>
@@ -1008,8 +1056,23 @@ function showRefTab(tab) {
 
 // ── 大廳 ──────────────────────────────────────────────────────────────────
 
-function showJoin(){
-  document.getElementById('join-row').style.display='flex';
+function goLobby(mode){
+  document.getElementById('landing').style.display='none';
+  document.getElementById('header').style.display='block';
+  document.getElementById('lobby').style.display='flex';
+  document.getElementById('host-row').style.display = mode==='host' ? 'block' : 'none';
+  document.getElementById('join-row').style.display = mode==='join' ? 'flex' : 'none';
+  document.getElementById('solo-row').style.display = mode==='solo' ? 'block' : 'none';
+  const titles = {host:'主辦遊戲', join:'加入遊戲', solo:'單人練習'};
+  document.getElementById('lobby-mode-title').textContent = titles[mode] || '';
+  setTimeout(()=>document.getElementById('name-input').focus(), 80);
+}
+
+function showLanding(){
+  document.getElementById('landing').style.display='flex';
+  document.getElementById('header').style.display='none';
+  document.getElementById('lobby').style.display='none';
+  document.getElementById('lobby-error').textContent='';
 }
 
 function createRoom(){
@@ -1043,11 +1106,18 @@ function showLobbyError(msg){
 
 // ── Socket 事件 ───────────────────────────────────────────────────────────
 
+function _enterRoom(){
+  // once in a room, hide back button and landing permanently
+  document.getElementById('back-to-landing').style.display='none';
+  document.getElementById('landing').style.display='none';
+}
+
 socket.on('room_created',d=>{
   myPid=d.pid; roomCode=d.room_code;
+  _enterRoom();
   if(d.solo) return; // 單人模式直接等 state，不顯示大廳 UI
   document.getElementById('room-info').style.display='block';
-  document.getElementById('room-info').textContent=`房間代碼：${roomCode}（分享給同網路的朋友）`;
+  document.getElementById('room-info').textContent=`房間代碼：${roomCode}（分享給朋友）`;
   document.getElementById('lobby-actions').style.display='flex';
 });
 
@@ -1055,6 +1125,9 @@ socket.on('room_created',d=>{
 (()=>{
   const p = new URLSearchParams(window.location.search);
   if(p.get('solo')==='1'){
+    document.getElementById('landing').style.display='none';
+    document.getElementById('header').style.display='block';
+    document.getElementById('lobby').style.display='flex';
     const name = decodeURIComponent(p.get('name')||'玩家');
     document.getElementById('name-input').value = name;
     socket.once('connect', ()=> socket.emit('solo_start',{name, bot_count:3}));
@@ -1064,6 +1137,7 @@ socket.on('room_created',d=>{
 
 socket.on('room_joined',d=>{
   myPid=d.pid; roomCode=d.room_code;
+  _enterRoom();
   document.getElementById('room-info').style.display='block';
   document.getElementById('room-info').textContent=`已加入房間：${roomCode}`;
 });
@@ -1071,6 +1145,8 @@ socket.on('room_joined',d=>{
 socket.on('state',d=>{
   state=d;
   // hide all screens first
+  document.getElementById('landing').style.display='none';
+  document.getElementById('header').style.display='block';
   document.getElementById('lobby').style.display='none';
   document.getElementById('draft-screen').style.display='none';
   document.getElementById('role-draft-screen').style.display='none';
