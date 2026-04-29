@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>管理員登入 · 惡意併購</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:#0a0e18;color:#e2e8f0;
+  font-family:'Segoe UI',system-ui,sans-serif;
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background-image:radial-gradient(ellipse at 15% 0%,#162040 0%,transparent 55%),
+    radial-gradient(ellipse at 85% 100%,#1a0d2a 0%,transparent 55%);
+}
+.card{
+  background:#111827;border:1px solid #1e2a3a;border-radius:16px;
+  padding:40px 36px;width:100%;max-width:360px;
+  box-shadow:0 12px 40px #0009;
+  display:flex;flex-direction:column;gap:18px;
+}
+h1{color:#f0c040;font-size:1.1rem;text-align:center;letter-spacing:2px}
+.sub{color:#64748b;font-size:.78rem;text-align:center;margin-top:-10px}
+input{
+  padding:11px 14px;border-radius:8px;border:1px solid #2d3748;
+  background:#0a0e18;color:#e2e8f0;font-size:.93rem;width:100%;
+}
+input:focus{outline:none;border-color:#3b82f6}
+button{
+  padding:12px;border-radius:8px;border:none;
+  background:#166534;color:#fff;font-size:.95rem;font-weight:700;cursor:pointer;
+  transition:background .15s;
+}
+button:hover{background:#16a34a}
+.error{color:#fca5a5;font-size:.83rem;text-align:center;background:#1f0707;
+  border:1px solid #7f1d1d;border-radius:6px;padding:8px}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>⚙️ 管理後台</h1>
+  <div class="sub">惡意併購 · Hostile Takeover</div>
+  <form method="POST" style="display:flex;flex-direction:column;gap:12px">
+    <input type="password" name="password" placeholder="管理員密碼" autofocus>
+    <button type="submit">登入</button>
+  </form>
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+</div>
+</body>
+</html>

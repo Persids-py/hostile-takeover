@@ -7,7 +7,8 @@ import string
 import sys
 import os
 
-from flask import Flask, render_template, request
+from functools import wraps
+from flask import Flask, render_template, request, session, redirect, jsonify
 from flask_socketio import SocketIO, emit, join_room
 
 import game as G
@@ -91,9 +92,98 @@ def _get_context():
 
 # ── HTTP ──────────────────────────────────────────────────────────────────────
 
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "ht-admin-2025")
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("is_admin"):
+            return redirect("/admin/login")
+        return f(*args, **kwargs)
+    return decorated
+
 @app.route("/")
 def index():
     return render_template("index.html")
+
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+    error = None
+    if request.method == "POST":
+        if request.form.get("password") == ADMIN_PASSWORD:
+            session["is_admin"] = True
+            return redirect("/admin")
+        error = "密碼錯誤"
+    return render_template("admin_login.html", error=error)
+
+@app.route("/admin/logout")
+def admin_logout():
+    session.pop("is_admin", None)
+    return redirect("/admin/login")
+
+@app.route("/admin")
+@admin_required
+def admin_dashboard():
+    return render_template("admin.html")
+
+@app.route("/admin/api/rooms")
+@admin_required
+def admin_api_rooms():
+    data = []
+    for code, r in list(rooms.items()):
+        g = r["game"]
+        players = []
+        for pid, p in g["players"].items():
+            players.append({
+                "pid": pid,
+                "name": p["name"],
+                "is_bot": p.get("is_bot", False),
+                "connected": pid in r["pid_to_sid"],
+                "black": p.get("black", 0),
+                "is_bankrupt": p.get("is_bankrupt", False),
+            })
+        data.append({
+            "code": code,
+            "phase": g["phase"],
+            "humans": sum(1 for p in players if not p["is_bot"]),
+            "bots": sum(1 for p in players if p["is_bot"]),
+            "players": players,
+            "log": g.get("log", [])[-20:],  # 最新20條
+        })
+    return jsonify({"rooms": data})
+
+@app.route("/admin/close-room/<code>", methods=["POST"])
+@admin_required
+def admin_close_room(code):
+    if code not in rooms:
+        return jsonify({"ok": False, "msg": "房間不存在"})
+    r = rooms[code]
+    for sid in list(r["pid_to_sid"].values()):
+        if not sid.startswith("bot_"):
+            socketio.emit("error", {"msg": "⚠️ 管理員已關閉此房間"}, to=sid)
+    del rooms[code]
+    return jsonify({"ok": True})
+
+@app.route("/admin/kick/<code>/<pid>", methods=["POST"])
+@admin_required
+def admin_kick(code, pid):
+    r = rooms.get(code)
+    if not r:
+        return jsonify({"ok": False, "msg": "房間不存在"})
+    sid = r["pid_to_sid"].get(pid)
+    if sid and not sid.startswith("bot_"):
+        socketio.emit("error", {"msg": "⚠️ 你已被管理員踢出房間"}, to=sid)
+        socketio.disconnect(sid)
+    return jsonify({"ok": True})
+
+@app.route("/admin/broadcast", methods=["POST"])
+@admin_required
+def admin_broadcast():
+    msg = (request.json or {}).get("msg", "").strip()
+    if not msg:
+        return jsonify({"ok": False, "msg": "訊息不能為空"})
+    socketio.emit("admin_broadcast", {"msg": msg})
+    return jsonify({"ok": True})
 
 # ── Socket 事件 ───────────────────────────────────────────────────────────────
 
