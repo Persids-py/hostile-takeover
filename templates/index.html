@@ -897,8 +897,8 @@ function _checkHints(d){
   if(me.identity==='independent' && (me.blue+me.red+me.black)>=5) showHint('near_win');
   // 傳遞方式說明（第一次有牌在傳）
   if(d.transit) showHint('transmit_mode');
-  // 拒收提示（牌已傳過至少一人）
-  if(d.transit && d.transit.visited && d.transit.visited.length>1){
+  // 拒收提示（我送出的牌被拒收了）
+  if(d.transit && d.transit.visited && d.transit.visited.length>1 && d.transit.sender===myPid){
     showHint('got_refuse');
   }
   // 有人破產

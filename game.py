@@ -1522,6 +1522,7 @@ def player_view(game, viewer_pid):
             "current_target_name": pname(game, t["current_target"]),
             "card": t["card"] if face_up else {"name": "???", "color": "unknown"},
             "going_back": t["going_back"],
+            "visited": t["visited"],
         }
         # 非公開傳遞時，只有傳出者本人能看到牌面
         if not face_up and t["sender"] == viewer_pid:
