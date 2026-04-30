@@ -106,6 +106,10 @@ def admin_required(f):
 def index():
     return render_template("index.html")
 
+@app.route("/google406a58d71ce9c547.html")
+def google_verify():
+    return "google-site-verification: google406a58d71ce9c547.html", 200, {"Content-Type": "text/html"}
+
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
     error = None
