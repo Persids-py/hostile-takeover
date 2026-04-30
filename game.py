@@ -549,7 +549,7 @@ def _begin_turn(game):
         p["role_state"]["reject_draws_this_turn"] = 0
     if role == "數據掮客":
         p["role_state"]["cycle_used_this_turn"] = False
-    p["role_task_progress"]["func_count_this_turn"] = p["role_task_progress"].get("func_count_this_turn", 0)
+    p["role_task_progress"]["func_count_this_turn"] = 0
 
     drawn = draw_n(game, pid, 2)
     _log(game, f"{p['name']} 抽了 {len(drawn)} 張牌（手牌 {len(p['hand'])} 張）")
