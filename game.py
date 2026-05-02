@@ -1164,7 +1164,6 @@ def _handle_盡職調查(game, pid, extra, win):
 def _handle_公開財報(game, pid, extra, win):
     target   = extra.get("target_pid") if extra else None
     give_iid = extra.get("give_iid")   if extra else None
-    _log(game, f"[DEBUG 公開財報] target={target} give_iid={give_iid} hand_iids={[c['iid'] for c in game['players'][pid]['hand']]}")
     # 兩個參數任一缺失 → 一次回傳合併對話框所需的全部資訊
     if not target or target == pid or give_iid is None:
         others = [{"pid": p2, "name": game["players"][p2]["name"]}
@@ -1178,7 +1177,6 @@ def _handle_公開財報(game, pid, extra, win):
         return False, f"{pname(game, target)} 沒有手牌", False
     give_card = find_card_in_hand(game["players"][pid], give_iid)
     if not give_card:
-        _log(game, f"[DEBUG 公開財報] 找不到牌 give_iid={give_iid}，手牌 iids={[c['iid'] for c in game['players'][pid]['hand']]}")
         return False, "找不到你要給出的牌", False
     take_card = random.choice(tp["hand"])
     game["players"][pid]["hand"].remove(give_card)
