@@ -729,17 +729,40 @@ button{cursor:pointer;font-family:inherit}
 #gameover-overlay{
   position:fixed;inset:0;background:#000d;
   display:none;justify-content:center;align-items:center;
-  z-index:300;backdrop-filter:blur(6px);
+  z-index:300;backdrop-filter:blur(6px);padding:16px;
 }
 #gameover-box{
-  background:var(--surface);border:2px solid var(--gold);
-  border-radius:20px;padding:44px;
-  text-align:center;max-width:440px;
-  box-shadow:0 0 60px #f0c04022;
+  background:#0f1520;border:2px solid var(--gold);
+  border-radius:20px;padding:32px 28px 28px;
+  text-align:center;width:100%;max-width:680px;max-height:90vh;
+  overflow-y:auto;
+  box-shadow:0 0 80px #f0c04028;
   animation:slideUp .3s ease;
 }
-#gameover-box h1{color:var(--gold);font-size:2rem;margin-bottom:12px;text-shadow:0 0 20px #f0c04055}
-#gameover-box p{color:var(--text);font-size:.93rem;margin-bottom:12px;line-height:1.5}
+#gameover-box h1{color:var(--gold);font-size:2rem;margin-bottom:6px;text-shadow:0 0 20px #f0c04055}
+#gameover-reason{color:var(--text-muted);font-size:.9rem;margin-bottom:20px}
+#gameover-players{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
+  gap:10px;margin-bottom:22px;text-align:left;
+}
+.go-player{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:13px 14px;position:relative;
+}
+.go-player.winner{border-color:#f0c040;background:linear-gradient(145deg,#1a1500,var(--surface))}
+.go-player.bankrupt{opacity:.5;filter:grayscale(.7)}
+.go-player-crown{position:absolute;top:-10px;right:10px;font-size:1.2rem}
+.go-player-name{font-size:.92rem;font-weight:700;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.go-player-identity{font-size:.75rem;border-radius:4px;padding:2px 7px;display:inline-block;margin-bottom:6px;font-weight:600}
+.go-id-board{background:#1e3a5f;color:#93c5fd}
+.go-id-vulture{background:#4a1010;color:#fca5a5}
+.go-id-indie{background:#1a1a2a;color:#a78bfa;border:1px solid #4c1d95}
+.go-player-role{font-size:.75rem;color:var(--text-muted);margin-bottom:8px}
+.go-player-stats{display:flex;gap:8px;font-size:.78rem;flex-wrap:wrap}
+.go-stat{display:flex;align-items:center;gap:3px}
+.go-task{font-size:.72rem;margin-top:6px;padding:3px 7px;border-radius:4px;display:inline-block}
+.go-task.done{background:#0f2d1a;color:#4ade80;border:1px solid #166534}
+.go-task.fail{background:#1f0707;color:#f87171;border:1px solid #7f1d1d}
 
 /* ── MOBILE RWD ── */
 @media(max-width:768px){
@@ -1207,9 +1230,9 @@ button{cursor:pointer;font-family:inherit}
 
 <div id="gameover-overlay">
   <div id="gameover-box">
-    <h1>遊戲結束</h1>
+    <h1>🏁 遊戲結束</h1>
     <p id="gameover-reason"></p>
-    <p id="gameover-winners" style="color:var(--gold);font-size:1.1rem;font-weight:700;margin-bottom:24px"></p>
+    <div id="gameover-players"></div>
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
       <button id="btn-restart" class="btn-primary" style="padding:11px 28px;font-size:1rem;border-radius:10px;background:#6d28d9" onclick="restartGame()">🔁 再來一局</button>
       <button class="btn-secondary" style="padding:11px 28px;font-size:1rem;border-radius:10px" onclick="location.reload()">返回大廳</button>
@@ -2862,10 +2885,34 @@ function closeExtra(){
 function showGameOver(d){
   document.getElementById('gameover-overlay').style.display='flex';
   document.getElementById('gameover-reason').textContent=d.win_reason||'遊戲結束';
-  const winnerNames=d.winner_pids.map(pid=>d.players.find(p=>p.pid===pid)?.name||pid);
-  document.getElementById('gameover-winners').textContent=
-    winnerNames.length?`🏆 獲勝者：${winnerNames.join('、')}`:'';
-  // 只有主辦者或單人模式才能再來一局
+
+  const IDENTITY_LABEL = {board:'董事會',vulture:'禿鷹基金',independent:'獨立投資人'};
+  const IDENTITY_CLASS = {board:'go-id-board',vulture:'go-id-vulture',independent:'go-id-indie'};
+  const winnerSet = new Set(d.winner_pids||[]);
+
+  const container = document.getElementById('gameover-players');
+  container.innerHTML = (d.players||[]).map(p=>{
+    const isWinner = winnerSet.has(p.pid);
+    const identLabel = IDENTITY_LABEL[p.identity]||'?';
+    const identClass = IDENTITY_CLASS[p.identity]||'';
+    const crown = isWinner ? '<div class="go-player-crown">👑</div>' : '';
+    const bankruptBadge = p.is_bankrupt ? ' <span style="color:#f87171;font-size:.72rem">💀 破產</span>' : '';
+    const taskBadge = (p.role && p.role_task_done != null)
+      ? `<div class="go-task ${p.role_task_done?'done':'fail'}">${p.role_task_done?'✓ 任務完成':'✗ 任務未完成'}</div>` : '';
+    return `<div class="go-player${isWinner?' winner':''}${p.is_bankrupt?' bankrupt':''}">
+      ${crown}
+      <div class="go-player-name">${esc(p.name)}${bankruptBadge}</div>
+      <div><span class="go-player-identity ${identClass}">${identLabel}</span></div>
+      <div class="go-player-role">🎭 ${esc(p.role||'—')}</div>
+      <div class="go-player-stats">
+        <span class="go-stat"><span style="color:#93c5fd">🔵</span>${p.blue}</span>
+        <span class="go-stat"><span style="color:#fca5a5">🔴</span>${p.red}</span>
+        <span class="go-stat"><span style="color:#9ca3af">⚫</span>${p.black}</span>
+      </div>
+      ${taskBadge}
+    </div>`;
+  }).join('');
+
   const isHost = d.players.length>0 && d.players[0].pid===myPid;
   document.getElementById('btn-restart').style.display = (isSolo||isHost)?'inline-block':'none';
 }

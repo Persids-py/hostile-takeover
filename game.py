@@ -1538,7 +1538,7 @@ def player_view(game, viewer_pid):
             "secrets": p["secrets"],
             "is_bankrupt": p["is_bankrupt"],
             "is_locked": p["is_locked"],
-            "identity": p["identity"] if pid == viewer_pid else (p["identity"] if p["is_bankrupt"] else None),
+            "identity": p["identity"] if (pid == viewer_pid or p["is_bankrupt"] or game["phase"] == PHASE_GAME_OVER) else None,
             "role": p.get("role"),        # 角色公開顯示（所有玩家可見）
             "blue": count_blue(p),
             "red": count_red(p),
@@ -1549,6 +1549,8 @@ def player_view(game, viewer_pid):
             entry["role"] = p.get("role")
             entry["role_used"] = p.get("role_used", False)
             entry["role_task_progress"] = p.get("role_task_progress", {})
+            entry["role_task_done"] = p.get("role_task_done", False)
+        if game["phase"] == PHASE_GAME_OVER:
             entry["role_task_done"] = p.get("role_task_done", False)
         players_view.append(entry)
 
