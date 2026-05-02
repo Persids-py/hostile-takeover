@@ -478,27 +478,46 @@ button{cursor:pointer;font-family:inherit}
   background:linear-gradient(180deg,#090d16 0%,#0c1020 100%);
 }
 #my-hand h3{font-size:.76rem;color:var(--text-muted);margin-bottom:8px;letter-spacing:1.5px;text-transform:uppercase}
-#hand-cards{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start}
+#hand-cards{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;padding-bottom:12px}
 
 .card{
-  border-radius:10px;border:2px solid;
-  padding:10px 11px;cursor:pointer;
-  transition:transform .15s,box-shadow .15s;
-  width:128px;min-height:148px;
-  display:flex;flex-direction:column;gap:4px;flex-shrink:0;
+  border-radius:12px;border:2px solid;
+  cursor:pointer;overflow:hidden;
+  transition:transform .18s cubic-bezier(.34,1.4,.64,1),box-shadow .18s;
+  width:118px;min-height:162px;
+  display:flex;flex-direction:column;flex-shrink:0;
+  position:relative;
 }
-.card:hover{transform:translateY(-7px);box-shadow:0 12px 28px #000a}
-.card.selected{box-shadow:0 0 0 3px var(--gold),0 0 14px #f0c04044}
-.card.blue-card{background:#0c1e3d;border-color:#3b82f6;color:#bfdbfe}
-.card.red-card{background:#2c0b0b;border-color:#ef4444;color:#fecaca}
-.card.black-card{background:#141414;border-color:#374151;color:#6b7280}
-.card.dual-card{background:#161200;border-color:#b45309;color:#fcd34d}
-.card.func-card{background:#140d27;border-color:#7c3aed;color:#c4b5fd}
-.card-name{font-weight:700;font-size:.88rem;text-align:center}
-.card-sub{font-size:.68rem;opacity:.6;text-align:center}
-.card-tx{font-size:.63rem;background:#ffffff10;border-radius:3px;padding:2px 5px;text-align:center;align-self:center}
-.card-divider{border:none;border-top:1px solid #ffffff15;margin:3px 0}
-.card-desc{font-size:.68rem;line-height:1.55;opacity:.8;flex:1}
+.card:hover{transform:translateY(-10px) scale(1.04);box-shadow:0 18px 36px #000c}
+.card.selected{box-shadow:0 0 0 3px var(--gold),0 0 20px #f0c04055;transform:translateY(-6px)}
+.card.selected::after{
+  content:'';position:absolute;inset:0;border-radius:10px;
+  background:linear-gradient(135deg,#f0c04012,transparent 60%);pointer-events:none;
+}
+.card.blue-card{background:linear-gradient(160deg,#0e2346,#091730);border-color:#3b82f6;color:#bfdbfe}
+.card.red-card{background:linear-gradient(160deg,#360e0e,#1e0707);border-color:#ef4444;color:#fecaca}
+.card.black-card{background:linear-gradient(160deg,#1a1a1a,#0f0f0f);border-color:#4b5563;color:#9ca3af}
+.card.dual-card{background:linear-gradient(160deg,#1e1500,#120e00);border-color:#d97706;color:#fcd34d}
+.card.func-card{background:linear-gradient(160deg,#1c1035,#100920);border-color:#7c3aed;color:#c4b5fd}
+.card-banner{
+  height:36px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 9px;font-size:.62rem;font-weight:700;letter-spacing:.4px;flex-shrink:0;
+}
+.blue-card  .card-banner{background:#1e3a5f;color:#93c5fd}
+.red-card   .card-banner{background:#4a1010;color:#fca5a5}
+.black-card .card-banner{background:#1f2937;color:#9ca3af}
+.dual-card  .card-banner{background:#2a1f00;color:#fbbf24}
+.func-card  .card-banner{background:#2e1065;color:#c4b5fd}
+.card-banner-icon{font-size:1rem;line-height:1}
+.card-tx-badge{
+  font-size:.56rem;background:#ffffff18;border-radius:3px;
+  padding:2px 5px;white-space:nowrap;
+}
+.card-body{padding:8px 9px 10px;display:flex;flex-direction:column;gap:4px;flex:1}
+.card-name{font-weight:800;font-size:.88rem;text-align:center;letter-spacing:.3px;line-height:1.25}
+.card-sub{font-size:.62rem;opacity:.55;text-align:center;margin-top:1px}
+.card-divider{border:none;border-top:1px solid #ffffff12;margin:5px 0}
+.card-desc{font-size:.65rem;line-height:1.6;opacity:.75;flex:1}
 
 /* ── CARD REFERENCE MODAL ── */
 #ref-modal{
@@ -2447,19 +2466,26 @@ function renderHand(d){
   const isMyTurn=d.current_turn_pid===myPid;
   const win=d.response_window;
 
+  const COLOR_ICON={blue:'🔵',red:'🔴',black:'⚫',dual:'🟡'};
+  const TX_LABEL={encrypted:'🔒 加密',public:'📢 公開',private:'✉️ 私函'};
   me.hand.forEach(c=>{
     const div=document.createElement('div');
     const cls=colorClass(c.color);
     const isSelected=selectedCardIid===c.iid;
     const isDiscardSel=discardSelected.includes(c.iid);
     div.className=`card ${cls}${isSelected||isDiscardSel?' selected':''}`;
-    const txLabel={encrypted:'加密雲端',public:'公開新聞稿',private:'私人信件'}[c.transmit]||'';
+    const txBadge=TX_LABEL[c.transmit]||'';
     const descHtml=c.desc?`<hr class="card-divider"><div class="card-desc">${esc(c.desc)}</div>`:'';
     div.innerHTML=`
-      <div class="card-name">${esc(c.name)}</div>
-      <div class="card-sub">${colorLabel(c.color)}</div>
-      ${txLabel?`<div class="card-tx">${txLabel}</div>`:''}
-      ${descHtml}
+      <div class="card-banner">
+        <span class="card-banner-icon">${COLOR_ICON[c.color]||''}</span>
+        ${txBadge?`<span class="card-tx-badge">${txBadge}</span>`:''}
+      </div>
+      <div class="card-body">
+        <div class="card-name">${esc(c.name)}</div>
+        <div class="card-sub">${colorLabel(c.color)}</div>
+        ${descHtml}
+      </div>
     `;
     div.onclick=()=>onCardClick(c, phase, isMyTurn, win, me);
     cards.appendChild(div);
