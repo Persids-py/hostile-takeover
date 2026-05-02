@@ -341,7 +341,10 @@ def _check_role_task_wins(game):
             role = p.get("role", "")
             reason = f"{p['name']} 完成【{role}】角色任務，獨立投資人任務勝利！"
             _log(game, f"🎯 {reason}")
-            _trigger_win(game, [pid], reason)
+            all_indies = [p2 for p2 in game["order"]
+                          if not game["players"][p2]["is_bankrupt"]
+                          and game["players"][p2].get("identity") == INDEPENDENT]
+            _trigger_win(game, all_indies, reason)
             return True
     return False
 
