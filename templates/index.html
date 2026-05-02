@@ -193,6 +193,93 @@ body{
 .btn-landing-solo{background:#6d28d9;color:#fff}
 .btn-landing-solo:hover{background:var(--purple)}
 
+/* ── RULES MODAL ── */
+#rules-overlay{
+  position:fixed;inset:0;z-index:9000;
+  background:#0008;backdrop-filter:blur(4px);
+  display:none;align-items:center;justify-content:center;padding:16px;
+}
+#rules-overlay.open{display:flex}
+#rules-modal{
+  background:#0f1520;border:1px solid var(--border2);border-radius:18px;
+  width:100%;max-width:680px;max-height:90vh;display:flex;flex-direction:column;
+  box-shadow:0 24px 80px #000c;overflow:hidden;
+}
+#rules-modal-header{
+  padding:20px 24px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+#rules-modal-header h2{color:var(--gold);font-size:1.1rem;letter-spacing:2px}
+#rules-close{
+  background:none;border:none;color:var(--text-muted);font-size:1.4rem;
+  cursor:pointer;padding:4px 8px;border-radius:6px;transition:background .15s;
+  line-height:1;
+}
+#rules-close:hover{background:var(--surface2);color:var(--text)}
+#rules-tabs{
+  display:flex;gap:2px;padding:12px 20px 0;flex-shrink:0;
+  border-bottom:1px solid var(--border);
+}
+.rules-tab{
+  padding:7px 16px;border-radius:8px 8px 0 0;border:none;
+  background:none;color:var(--text-muted);font-size:.85rem;font-weight:600;
+  cursor:pointer;transition:background .15s,color .15s;font-family:inherit;
+  border-bottom:2px solid transparent;margin-bottom:-1px;
+}
+.rules-tab:hover{color:var(--text)}
+.rules-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+#rules-body{
+  overflow-y:auto;padding:22px 24px;flex:1;
+  scrollbar-width:thin;scrollbar-color:var(--border2) transparent;
+}
+.rules-section{display:none}
+.rules-section.active{display:block}
+.rules-h1{font-size:1rem;color:var(--gold);font-weight:700;margin-bottom:12px;letter-spacing:1px}
+.rules-h2{font-size:.88rem;color:var(--text-dim);font-weight:700;margin:16px 0 8px;letter-spacing:.5px}
+.rules-p{font-size:.85rem;color:var(--text-muted);line-height:1.75;margin-bottom:10px}
+.rules-p b{color:var(--text)}
+.rules-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.rules-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:12px 14px;
+}
+.rules-card-title{font-size:.85rem;font-weight:700;margin-bottom:5px}
+.rules-card-body{font-size:.78rem;color:var(--text-muted);line-height:1.6}
+.tag{display:inline-block;border-radius:4px;padding:1px 7px;font-size:.72rem;font-weight:700;margin-right:4px}
+.tag-blue{background:#1e3a5f;color:#93c5fd}
+.tag-red{background:#4a1010;color:#fca5a5}
+.tag-black{background:#1a1a1a;color:#9ca3af;border:1px solid #374151}
+.tag-dual{background:#2a1550;color:#d8b4fe}
+.tag-board{background:#1e3a5f;color:#93c5fd}
+.tag-vulture{background:#4a1010;color:#fca5a5}
+.tag-indie{background:#1a1a1a;color:#9ca3af;border:1px solid #374151}
+.rules-flow{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.rules-step{
+  display:flex;align-items:flex-start;gap:12px;
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 14px;
+}
+.rules-step-num{
+  background:var(--gold);color:#000;font-weight:800;font-size:.78rem;
+  border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.rules-step-body{font-size:.82rem;color:var(--text-muted);line-height:1.6}
+.rules-step-body b{color:var(--text)}
+.rules-role-list{display:flex;flex-direction:column;gap:8px}
+.rules-role{
+  background:var(--surface);border:1px solid var(--border);border-left:3px solid #7c3aed;
+  border-radius:10px;padding:11px 14px;
+}
+.rules-role-name{font-size:.88rem;font-weight:700;color:#c4b5fd;margin-bottom:4px}
+.rules-role-skill{font-size:.78rem;color:var(--text-muted);line-height:1.55;margin-bottom:3px}
+.rules-role-task{font-size:.75rem;color:#64748b;line-height:1.5}
+.rules-role-task::before{content:'📋 任務：';color:#f0c040;font-weight:600}
+@media(max-width:520px){
+  .rules-grid{grid-template-columns:1fr}
+  #rules-modal{max-height:95vh}
+  #rules-tabs{overflow-x:auto;padding-bottom:0}
+  .rules-tab{white-space:nowrap}
+}
+
 /* ── LOBBY ── */
 #lobby{
   display:none;flex-direction:column;align-items:center;
@@ -758,6 +845,201 @@ button{cursor:pointer;font-family:inherit}
   <div id="role-draft-status" style="color:var(--text-dim);font-size:.85rem;text-align:center"></div>
 </div>
 
+<!-- RULES MODAL -->
+<div id="rules-overlay" onclick="if(event.target===this)closeRules()">
+  <div id="rules-modal">
+    <div id="rules-modal-header">
+      <h2>📖 遊戲說明</h2>
+      <button id="rules-close" onclick="closeRules()">✕</button>
+    </div>
+    <div id="rules-tabs">
+      <button class="rules-tab active" onclick="switchRulesTab('overview')">概覽</button>
+      <button class="rules-tab" onclick="switchRulesTab('flow')">遊戲流程</button>
+      <button class="rules-tab" onclick="switchRulesTab('cards')">牌的種類</button>
+      <button class="rules-tab" onclick="switchRulesTab('roles')">角色牌</button>
+    </div>
+    <div id="rules-body">
+
+      <!-- 概覽 -->
+      <div class="rules-section active" id="rules-tab-overview">
+        <div class="rules-h1">🎯 遊戲目標</div>
+        <p class="rules-p">惡意併購是一款 <b>2–7 人</b>的多人策略卡牌遊戲。玩家各自持有秘密身份，透過傳遞機密牌、使用功能牌和角色技能，達成自己的陣營勝利條件。</p>
+
+        <div class="rules-h2">⚔️ 三大陣營</div>
+        <div class="rules-grid">
+          <div class="rules-card">
+            <div class="rules-card-title"><span class="tag tag-board">董事會</span></div>
+            <div class="rules-card-body">秘密區累積 <b>3 張藍色或雙色</b>機密即獲勝。<br>阻止禿鷹基金達成目標。</div>
+          </div>
+          <div class="rules-card">
+            <div class="rules-card-title"><span class="tag tag-vulture">禿鷹基金</span></div>
+            <div class="rules-card-body">秘密區累積 <b>3 張紅色或雙色</b>機密即獲勝。<br>阻止董事會達成目標。</div>
+          </div>
+          <div class="rules-card" style="grid-column:1/-1">
+            <div class="rules-card-title"><span class="tag tag-indie">獨立投資人</span></div>
+            <div class="rules-card-body">沒有陣營，靠完成<b>角色牌個人任務</b>獲得任務勝利；若某一陣營達成陣營勝利，尚未任務勝利的獨立投資人則以存活（未破產）判定輸贏。</div>
+          </div>
+        </div>
+
+        <div class="rules-h2">💀 破產出局</div>
+        <p class="rules-p">機密區累積 <b>3 張黑色機密</b>（有毒資產）即宣告破產，退出遊戲。破產的玩家不能再行動，也不計入獲勝。</p>
+
+        <div class="rules-h2">🃏 手牌上限</div>
+        <p class="rules-p">手牌上限預設為 <b>6 張</b>。每回合結束時若超過上限，需棄牌至上限。</p>
+      </div>
+
+      <!-- 遊戲流程 -->
+      <div class="rules-section" id="rules-tab-flow">
+        <div class="rules-h1">🔄 遊戲流程</div>
+
+        <div class="rules-h2">開局準備</div>
+        <div class="rules-flow">
+          <div class="rules-step">
+            <div class="rules-step-num">1</div>
+            <div class="rules-step-body"><b>抽身份牌</b> — 每人從牌堆隨機抽一張身份牌（董事會／禿鷹基金／獨立投資人），只有自己看得到。</div>
+          </div>
+          <div class="rules-step">
+            <div class="rules-step-num">2</div>
+            <div class="rules-step-body"><b>選角色牌</b> — 每人從 3 張隨機角色牌中選 1 張，獲得專屬技能與個人任務。</div>
+          </div>
+          <div class="rules-step">
+            <div class="rules-step-num">3</div>
+            <div class="rules-step-body"><b>發初始手牌</b> — 每人抽 4 張牌，遊戲正式開始。</div>
+          </div>
+        </div>
+
+        <div class="rules-h2">每回合行動</div>
+        <div class="rules-flow">
+          <div class="rules-step">
+            <div class="rules-step-num">1</div>
+            <div class="rules-step-body"><b>抽牌</b> — 從牌庫抽 2 張牌到手中。</div>
+          </div>
+          <div class="rules-step">
+            <div class="rules-step-num">2</div>
+            <div class="rules-step-body"><b>（可選）使用功能牌</b> — 在傳牌前，可從手牌打出功能牌發動效果。</div>
+          </div>
+          <div class="rules-step">
+            <div class="rules-step-num">3</div>
+            <div class="rules-step-body"><b>傳遞機密</b> — 選一張手牌傳給指定玩家。傳出時宣告傳遞方式（加密／公開／私函）。接收方可選擇接收或拒收（視牌種而定）。傳遞過程中其他玩家可打出功能牌介入。</div>
+          </div>
+          <div class="rules-step">
+            <div class="rules-step-num">4</div>
+            <div class="rules-step-body"><b>棄牌</b> — 若手牌超過上限，需棄至上限張數。</div>
+          </div>
+        </div>
+
+        <div class="rules-h2">💬 傳遞方式說明</div>
+        <div class="rules-grid">
+          <div class="rules-card">
+            <div class="rules-card-title">🔒 加密傳遞</div>
+            <div class="rules-card-body">牌面朝下，接收方不知道是什麼牌。可以接收或拒收。</div>
+          </div>
+          <div class="rules-card">
+            <div class="rules-card-title">📢 公開傳遞</div>
+            <div class="rules-card-body">牌面朝上，所有人都看得到。接收方<b>不能拒收</b>。</div>
+          </div>
+          <div class="rules-card" style="grid-column:1/-1">
+            <div class="rules-card-title">✉️ 私函傳遞</div>
+            <div class="rules-card-body">牌面朝下。若接收方<b>拒收</b>，牌會退回給傳出方（而非繼續往下傳）。</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 牌的種類 -->
+      <div class="rules-section" id="rules-tab-cards">
+        <div class="rules-h1">🃏 牌的種類</div>
+        <p class="rules-p">每張牌同時具備兩種用途：作為<b>機密</b>傳遞給他人，或從手牌打出作為<b>功能牌</b>。</p>
+
+        <div class="rules-h2"><span class="tag tag-blue">藍色機密</span> 董事會的資產</div>
+        <div class="rules-grid">
+          <div class="rules-card"><div class="rules-card-title">盡職調查</div><div class="rules-card-body">秘密查看一名玩家的機密區</div></div>
+          <div class="rules-card"><div class="rules-card-title">公開財報</div><div class="rules-card-body">隨機與他人互換一張手牌</div></div>
+          <div class="rules-card"><div class="rules-card-title">資源挹注</div><div class="rules-card-body">抽牌，黑牌越多抽越多</div></div>
+          <div class="rules-card"><div class="rules-card-title">法務攔截</div><div class="rules-card-body">【響應鏈】使最後一張功能牌無效</div></div>
+          <div class="rules-card"><div class="rules-card-title">吹哨者舉報</div><div class="rules-card-body">看他人手牌並強制棄一張</div></div>
+        </div>
+
+        <div class="rules-h2"><span class="tag tag-red">紅色機密</span> 禿鷹基金的武器</div>
+        <div class="rules-grid">
+          <div class="rules-card"><div class="rules-card-title">內線交易</div><div class="rules-card-body">【他人傳出時】要求指定顏色，否則看手牌</div></div>
+          <div class="rules-card"><div class="rules-card-title">惡意截胡</div><div class="rules-card-body">【他人接收時】將機密強奪至自己面前</div></div>
+          <div class="rules-card"><div class="rules-card-title">惡意干擾</div><div class="rules-card-body">【他人接收時】取消接收，機密繼續往下傳</div></div>
+          <div class="rules-card"><div class="rules-card-title">惡意帶風向</div><div class="rules-card-body">【傳遞目標宣告時】強制改變傳遞對象</div></div>
+          <div class="rules-card"><div class="rules-card-title">惡意鎖定</div><div class="rules-card-body">指定玩家本輪無法拒收</div></div>
+        </div>
+
+        <div class="rules-h2"><span class="tag tag-black">黑色機密</span> 有毒資產</div>
+        <div class="rules-grid">
+          <div class="rules-card"><div class="rules-card-title">有毒資產</div><div class="rules-card-body">純毒牌，無功能。累積 3 張即破產出局</div></div>
+          <div class="rules-card"><div class="rules-card-title">債務轉移</div><div class="rules-card-body">【機密傳至自己時】強制轉給他人，對方無法拒收</div></div>
+          <div class="rules-card"><div class="rules-card-title">銷毀帳冊</div><div class="rules-card-body">棄置場上任一玩家已接收的黑色機密</div></div>
+          <div class="rules-card"><div class="rules-card-title">偷天換日</div><div class="rules-card-body">【私函被退回時】替換成另一張牌改公開重傳</div></div>
+        </div>
+
+        <div class="rules-h2"><span class="tag tag-dual">雙色機密</span> 核心機密</div>
+        <div class="rules-grid">
+          <div class="rules-card"><div class="rules-card-title">核心機密</div><div class="rules-card-body">可計入藍或紅勝利條件。功能：偷看傳遞中的加密機密</div></div>
+          <div class="rules-card"><div class="rules-card-title">駭客入侵</div><div class="rules-card-body">可計入藍或紅勝利條件。功能：查看一名玩家的整副手牌</div></div>
+        </div>
+      </div>
+
+      <!-- 角色牌 -->
+      <div class="rules-section" id="rules-tab-roles">
+        <div class="rules-h1">🎭 角色牌</div>
+        <p class="rules-p">每位玩家在開局時從 3 張隨機角色中選 1 張。角色提供<b>被動或主動技能</b>，以及<b>個人任務</b>（完成任務可達成任務勝利）。</p>
+        <div class="rules-role-list">
+          <div class="rules-role">
+            <div class="rules-role-name">🕵️ 企業間諜</div>
+            <div class="rules-role-skill">技能：遊戲開始時，秘密查看任意一名玩家的身份牌</div>
+            <div class="rules-role-task">成功接收由 2 名以上不同玩家主動傳來的機密各 ≥1 張</div>
+          </div>
+          <div class="rules-role">
+            <div class="rules-role-name">🎭 雙面公關</div>
+            <div class="rules-role-skill">技能：指定一名跟蹤對象；若其以陣營勝利條件獲勝，你也共同獲勝</div>
+            <div class="rules-role-task">曾向 ≥1 名董事會玩家傳出藍/雙機密，同時也向 ≥1 名禿鷹玩家傳出紅/雙機密（均被接收）</div>
+          </div>
+          <div class="rules-role">
+            <div class="rules-role-name">⚖️ 王牌律師</div>
+            <div class="rules-role-skill">技能（被動）：手牌上限永久提升為 8 張</div>
+            <div class="rules-role-task">在同一回合中打出 3 張功能牌</div>
+          </div>
+          <div class="rules-role">
+            <div class="rules-role-name">🦅 禿鷹操盤手</div>
+            <div class="rules-role-skill">技能（被動）：每當傳出的機密被拒收，立即抽 1 張牌（每回合最多 2 次）</div>
+            <div class="rules-role-task">傳出的機密累計被拒收 4 次以上</div>
+          </div>
+          <div class="rules-role">
+            <div class="rules-role-name">🔍 財務稽核</div>
+            <div class="rules-role-skill">技能：每局限 1 次，免費發動盡職調查（秘密查看一名玩家機密區）</div>
+            <div class="rules-role-task">使用功能牌查看過所有存活玩家的機密區各至少 1 次</div>
+          </div>
+          <div class="rules-role">
+            <div class="rules-role-name">🏚️ 空殼公司</div>
+            <div class="rules-role-skill">技能（被動）：破產門檻提高為 4 張有毒資產</div>
+            <div class="rules-role-task">持有至少 2 張有毒資產時，場上機密總數達到 5 張</div>
+          </div>
+          <div class="rules-role">
+            <div class="rules-role-name">🎯 市場狙擊手</div>
+            <div class="rules-role-skill">技能（被動）：私函被拒收時，可繼續往右順傳而非退回自己</div>
+            <div class="rules-role-task">以私函傳出的機密累計 4 張成功被接收</div>
+          </div>
+          <div class="rules-role">
+            <div class="rules-role-name">🤝 白衣騎士</div>
+            <div class="rules-role-skill">技能：每局限 1 次，將自己機密區 1 張非黑色機密無償傳給指定玩家（對方無法拒收）</div>
+            <div class="rules-role-task">幫助他人接收有利機密共計 3 張（傳藍/雙給董事會、傳紅/雙給禿鷹均計入）</div>
+          </div>
+          <div class="rules-role">
+            <div class="rules-role-name">💾 數據掮客</div>
+            <div class="rules-role-skill">技能：每回合 1 次，將手牌中 1 張牌放回牌庫頂後抽 1 張</div>
+            <div class="rules-role-task">在一局遊戲中使用功能牌（含技能抽換）合計達 6 次</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <!-- LANDING -->
 <div id="landing">
   <div id="landing-suits"></div>
@@ -768,6 +1050,7 @@ button{cursor:pointer;font-family:inherit}
     <button class="btn-landing btn-landing-join" onclick="goLobby('join')">🌐 加入遊戲</button>
     <button class="btn-landing btn-landing-solo" onclick="goLobby('solo')">🤖 單人練習</button>
   </div>
+  <button onclick="openRules()" style="background:none;border:none;color:var(--text-muted);font-size:.85rem;cursor:pointer;letter-spacing:1px;transition:color .15s;padding:4px 8px;font-family:inherit" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text-muted)'">❓ 怎麼玩</button>
 </div>
 
 <!-- LOBBY -->
@@ -1338,6 +1621,23 @@ function goLobby(mode){
   document.getElementById('lobby-mode-title').textContent = titles[mode] || '';
   setTimeout(()=>document.getElementById('name-input').focus(), 80);
 }
+
+function openRules(){
+  document.getElementById('rules-overlay').classList.add('open');
+}
+function closeRules(){
+  document.getElementById('rules-overlay').classList.remove('open');
+}
+function switchRulesTab(name){
+  document.querySelectorAll('.rules-tab').forEach((t,i)=>{
+    const tabs=['overview','flow','cards','roles'];
+    t.classList.toggle('active', tabs[i]===name);
+  });
+  document.querySelectorAll('.rules-section').forEach(s=>{
+    s.classList.toggle('active', s.id==='rules-tab-'+name);
+  });
+}
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeRules(); });
 
 function _initLandingSuits(){
   const container = document.getElementById('landing-suits');
