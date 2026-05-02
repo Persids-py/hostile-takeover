@@ -894,7 +894,8 @@ def action_accept(game, pid):
     if pid not in win["waiting_for"]:
         return False, "已宣告過了"
 
-    _log(game, f"{pname(game, pid)} 選擇接收")
+    forced = game["players"][pid].get("is_locked", False)
+    _log(game, f"{pname(game, pid)} {'（被惡意鎖定）強制接收' if forced else '選擇接收'}")
     # 目標已宣告接收 → 只有手牌中有相關響應牌的玩家才需要等待
     _RECEIVE_RESP = {"惡意截胡", "惡意干擾", "惡意帶風向", "法務攔截"}
     others = [
