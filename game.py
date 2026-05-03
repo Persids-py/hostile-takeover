@@ -147,7 +147,7 @@ def new_player(pid, name):
         "hand": [],
         "secrets": [],
         "is_bankrupt": False,
-        "is_locked": False,
+        "locked_by": None,
         "forced_transmit_color": None,
         "bankruptcy_caused_by": None,
         # Role card fields
@@ -922,8 +922,9 @@ def action_refuse(game, pid):
         return False, "已宣告過了"
     if t["going_back"]:
         return False, "機密已退回傳出者，不得拒收"
-    if game["players"][pid].get("is_locked"):
-        return False, "你被惡意鎖定，無法拒收"
+    locked_by = game["players"][pid].get("locked_by")
+    if locked_by and t and t.get("sender") == locked_by:
+        return False, "你被惡意鎖定，無法拒收此玩家傳來的機密"
 
     _log(game, f"{pname(game, pid)} 拒收")
     # 禿鷹操盤手技能：傳出者每次機密被拒收抽1張牌（每回合最多2次）
@@ -1072,7 +1073,8 @@ def _check_timing(name, pid, cp, phase, win, game):
         pass  # 任意時機可用
 
     elif name == "惡意鎖定":
-        pass  # 隨時可用
+        if pid != cp:
+            return False, "惡意鎖定：僅限自己回合使用"
 
     elif name == "內線交易":
         if not in_pretransmit_window:
@@ -1207,8 +1209,8 @@ def _handle_惡意鎖定(game, pid, extra, win):
     target, tp, err = _validate_target(game, pid, extra, allow_self=False, prompt="選擇要鎖定的玩家（不能是自己）")
     if err:
         return err
-    tp["is_locked"] = True
-    _log(game, f"{pname(game, pid)} 惡意鎖定 {pname(game, target)}，本回合無法拒收")
+    tp["locked_by"] = pid
+    _log(game, f"{pname(game, pid)} 惡意鎖定 {pname(game, target)}，無法拒收 {pname(game, pid)} 本回合傳出的機密")
     return True, "ok", False
 
 def _handle_法務攔截(game, pid, extra, win):
@@ -1539,7 +1541,8 @@ def player_view(game, viewer_pid):
             "hand_count": len(p["hand"]),
             "secrets": p["secrets"],
             "is_bankrupt": p["is_bankrupt"],
-            "is_locked": p["is_locked"],
+            "is_locked": p.get("locked_by") is not None,
+            "locked_by": p.get("locked_by"),
             "identity": p["identity"] if (pid == viewer_pid or p["is_bankrupt"] or game["phase"] == PHASE_GAME_OVER) else None,
             "role": p.get("role"),        # 角色公開顯示（所有玩家可見）
             "blue": count_blue(p),
@@ -1579,5 +1582,5 @@ def player_view(game, viewer_pid):
 def unlock_all(game):
     """回合結束後解除所有鎖定與強制傳牌限制（由 _begin_turn 前調用）。"""
     for p in game["players"].values():
-        p["is_locked"] = False
+        p["locked_by"] = None
         p["forced_transmit_color"] = None

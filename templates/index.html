@@ -2412,9 +2412,10 @@ function renderTransit(d){
   if(isMyDecision){
     banner.classList.add('my-decision');
     _startDecisionTimer(win.fid);
-    const isLocked=d.players.find(p=>p.pid===myPid)?.is_locked;
+    const me=d.players.find(p=>p.pid===myPid);
+    const lockedBySender = me?.locked_by && me.locked_by === t.sender;
     const isReturnToSender=t.going_back && t.sender===myPid;
-    const canRefuse=!isLocked && !isReturnToSender;
+    const canRefuse=!lockedBySender && !isReturnToSender;
     actions.appendChild(btn('接收','btn-sm btn-accept',()=>{_clearDecisionTimer();SFX.play('accept');socket.emit('accept',{});}));
     if(canRefuse){
       actions.appendChild(btn('拒收','btn-sm btn-refuse',()=>{_clearDecisionTimer();SFX.play('refuse');socket.emit('refuse',{});}));
