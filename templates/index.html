@@ -1170,7 +1170,7 @@ button{cursor:pointer;font-family:inherit}
   border-right:1px solid var(--cy-border);
   border-radius:0;
   padding:10px 13px;
-  flex:0 0 290px;
+  flex:0 0 360px;
   clip-path:none;
   box-shadow:none;
   overflow-y:auto;
@@ -1203,16 +1203,17 @@ button{cursor:pointer;font-family:inherit}
 
 /* ── CENTER: hand panel ── */
 #hand-wrapper {
-  flex:1 1 0;min-width:0;
+  flex:1 1 0;min-width:200px;
   display:flex;flex-direction:column;
+  position:relative;
 }
 #response-overlay {
   display:none;
+  position:absolute;top:0;left:0;right:0;z-index:10;
   background:linear-gradient(90deg,rgba(8,18,36,.97),rgba(16,8,36,.97));
-  border:none;border-bottom:1px solid rgba(255,179,0,.4);border-radius:0;
+  border:none;border-bottom:1px solid rgba(255,179,0,.5);border-radius:0;
   padding:6px 12px;
   flex-direction:row;align-items:center;gap:10px;
-  flex-shrink:0;
 }
 #my-hand {
   flex:1;
@@ -1238,7 +1239,7 @@ button{cursor:pointer;font-family:inherit}
   background:rgba(2,6,16,.98);
   border:none;border-left:1px solid var(--cy-border);border-radius:0;
   padding:8px 10px;
-  flex:0 0 260px;min-width:0;max-width:none;
+  flex:1 1 0;min-width:180px;max-width:none;
   align-self:auto;clip-path:none;box-shadow:none;
   position:relative;
   display:flex;flex-direction:column;overflow:hidden;
@@ -3351,7 +3352,11 @@ function _setResponseVisible(visible){
   const overlay = document.getElementById('response-overlay');
   const hand = document.getElementById('my-hand');
   if(overlay) overlay.style.display = visible ? 'flex' : 'none';
-  if(hand) hand.classList.toggle('standalone', !visible);
+  if(hand){
+    hand.classList.toggle('standalone', !visible);
+    // shift hand content down so overlay doesn't cover cards
+    hand.style.paddingTop = visible ? (overlay ? overlay.offsetHeight + 8 + 'px' : '48px') : '8px';
+  }
 }
 
 function renderResponseWindow(d){
