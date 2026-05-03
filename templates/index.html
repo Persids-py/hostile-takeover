@@ -691,7 +691,7 @@ button{cursor:pointer;font-family:inherit}
   50%{outline-color:#f0c04080;box-shadow:0 0 0 6px #f0c04010}
 }
 #hint-replay-btn{
-  position:fixed;bottom:115px;right:295px;z-index:250;
+  position:fixed;bottom:115px;right:16px;z-index:250;
   width:34px;height:34px;border-radius:50%;
   border:1px solid var(--gold-dim);background:#1a1300;
   color:var(--gold);font-size:1rem;cursor:pointer;
@@ -701,7 +701,7 @@ button{cursor:pointer;font-family:inherit}
 #hint-replay-btn:hover{background:#2a2000}
 
 #hint-box{
-  position:fixed;top:65px;right:290px;z-index:300;
+  position:fixed;top:60px;right:16px;z-index:300;
   background:linear-gradient(135deg,#0d1e38,#1a0f2e);
   border:1px solid var(--gold-dim);border-left:3px solid var(--gold);
   border-radius:10px;padding:12px 16px;max-width:320px;
@@ -847,6 +847,313 @@ button{cursor:pointer;font-family:inherit}
   /* Tiny phones: single column players */
   #players-area{grid-template-columns:1fr}
   .landing-title{font-size:2rem}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BOARD GAME LAYOUT v2
+   ═══════════════════════════════════════════════════════════ */
+
+#game {
+  display:none;
+  position:relative;
+  width:100vw;
+  height:100vh;
+  overflow:hidden;
+  background:
+    radial-gradient(ellipse at 50% 120%,#081620 0%,transparent 55%),
+    radial-gradient(ellipse at 20% 110%,#15082a 0%,transparent 42%),
+    radial-gradient(ellipse at 80% 110%,#081522 0%,transparent 42%),
+    #04080f;
+}
+
+/* ── SEATS ────────────────────────────────────────── */
+#seats-area {
+  position:absolute;inset:0;pointer-events:none;z-index:5;
+}
+.seat {
+  position:absolute;pointer-events:all;
+}
+.seat-tl { top:7%;  left:3%; }
+.seat-tc { top:1%;  left:50%; transform:translateX(-50%); }
+.seat-tr { top:7%;  right:3%; }
+.seat-l  { top:46%; left:.8%; transform:translateY(-50%); }
+.seat-r  { top:46%; right:.8%; transform:translateY(-50%); }
+.seat-bl { top:78%; left:3%; }
+
+.seat-card {
+  background:rgba(8,15,28,.94);
+  border:1px solid var(--border2);
+  border-radius:13px;
+  padding:8px 10px;
+  width:145px;
+  backdrop-filter:blur(6px);
+  transition:border-color .3s,box-shadow .3s;
+  position:relative;
+}
+.seat-card.active-turn {
+  border-color:#f0c040;
+  box-shadow:0 0 16px #f0c04030,0 0 5px #f0c04012;
+}
+.seat-card.bankrupt {
+  opacity:.28;filter:grayscale(1);
+}
+.seat-card-head {
+  display:flex;align-items:center;gap:6px;margin-bottom:6px;
+}
+.seat-avatar {
+  width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:.76rem;flex-shrink:0;
+  border:2px solid;text-transform:uppercase;
+}
+.seat-name {
+  font-size:.76rem;font-weight:700;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;
+}
+.seat-stat-row {
+  display:flex;gap:3px;margin-bottom:5px;flex-wrap:wrap;
+}
+.seat-sstat {
+  border-radius:4px;padding:1px 5px;font-size:.62rem;font-weight:700;
+}
+.seat-sstat.blue  {background:#1e3a5f;color:#93c5fd}
+.seat-sstat.red   {background:#4c1d1d;color:#fca5a5}
+.seat-sstat.black {background:#1c1c1c;color:#6b7280}
+.seat-sstat.hand  {background:#1a2030;color:var(--text-muted)}
+.seat-sdots {display:flex;gap:3px;flex-wrap:wrap;}
+.seat-sdot {
+  width:7px;height:7px;border-radius:50%;flex-shrink:0;
+}
+.seat-sdot.blue  {background:#3b82f6}
+.seat-sdot.red   {background:#ef4444}
+.seat-sdot.black {background:#4b5563}
+.seat-sdot.dual  {background:#d97706}
+.seat-badge-abs {
+  position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+  border-radius:8px;padding:1px 7px;font-size:.58rem;font-weight:700;
+  white-space:nowrap;
+}
+.seat-badge-turn   {background:#1a1300;border:1px solid var(--gold);color:var(--gold)}
+.seat-badge-bkrpt  {background:#2d0000;border:1px solid #7f1d1d;color:#fca5a5}
+.seat-badge-locked {
+  position:absolute;top:-8px;right:-8px;
+  background:#1e0040;border:1px solid #7c3aed;border-radius:8px;
+  padding:1px 5px;font-size:.58rem;color:#c4b5fd;
+}
+
+/* ── CENTER TABLE ─────────────────────────────────── */
+#table-area {
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-58%);
+  width:38vw;min-width:260px;max-width:500px;
+  aspect-ratio:15/9;
+  background:radial-gradient(ellipse at 50% 35%,#071a0d 0%,#030a05 100%);
+  border:2px solid #1a5c2a44;
+  border-radius:50%;
+  box-shadow:
+    0 0 90px #00cc4412,
+    0 0 35px #00440f08,
+    inset 0 0 70px #00000088;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  z-index:2;
+  overflow:hidden;
+}
+#table-area::before {
+  content:'';position:absolute;inset:11px;
+  border-radius:50%;border:1px solid #1a5c2a1a;pointer-events:none;
+}
+#table-inner {
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:6px;
+  padding:14px 26px;text-align:center;
+  max-width:92%;z-index:1;
+}
+#table-idle {
+  color:#1a4a2a;font-size:.68rem;
+  letter-spacing:2.5px;text-transform:uppercase;opacity:.7;
+}
+.tcard {
+  padding:5px 13px;border-radius:7px;
+  font-weight:700;font-size:.82rem;border:1px solid;
+}
+.tcard.blue  {background:#1e3a5f;color:#bfdbfe;border-color:#3b82f6}
+.tcard.red   {background:#4c1d1d;color:#fecaca;border-color:#ef4444}
+.tcard.black {background:#1c1c1c;color:#9ca3af;border-color:#374151}
+.tcard.dual  {background:#2d2800;color:#fcd34d;border-color:#b45309}
+.tcard.unknown{background:#1a2233;color:#64748b;border-color:#2d3748}
+#table-meta  {font-size:.65rem;color:var(--text-muted);line-height:1.6}
+#table-timer {font-size:.76rem;font-weight:700;padding:2px 9px;border-radius:10px;background:#0d1628}
+#table-actions {display:flex;gap:7px;flex-wrap:wrap;justify-content:center}
+@keyframes tableGlow {
+  0%,100%{box-shadow:0 0 90px #00cc4412,0 0 35px #00440f08,inset 0 0 70px #00000088;border-color:#1a5c2a44}
+  50%{box-shadow:0 0 60px #f0c04036,0 0 20px #f0c04015,inset 0 0 70px #00000088;border-color:#f0c04066}
+}
+#table-area.my-decision {
+  animation:tableGlow 1.8s ease-in-out infinite;
+}
+
+/* ── LOG TOGGLE BTN ───────────────────────────────── */
+#log-toggle-btn {
+  position:absolute;top:10px;right:10px;z-index:20;
+  background:rgba(10,18,32,.85);
+  border:1px solid var(--border2);border-radius:8px;
+  padding:5px 11px;color:var(--text-muted);
+  font-size:.74rem;cursor:pointer;
+  transition:background .15s,color .15s;
+  display:flex;align-items:center;gap:5px;
+  backdrop-filter:blur(4px);
+  font-family:inherit;
+}
+#log-toggle-btn:hover{background:var(--surface2);color:var(--text)}
+
+/* ── LOG PANEL ────────────────────────────────────── */
+#log-panel {
+  position:absolute;top:0;right:0;
+  height:100%;width:252px;
+  background:#070c15;border-left:1px solid var(--border);
+  display:flex;flex-direction:column;
+  z-index:15;
+  transform:translateX(100%);
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+}
+#log-panel.open { transform:translateX(0); }
+.log-panel-hdr {
+  padding:10px 12px 8px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;margin-top:42px;
+}
+.log-panel-hdr span {
+  font-size:.7rem;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:1.5px;
+}
+#log-panel-close {
+  background:none;border:none;color:var(--text-muted);
+  font-size:1rem;cursor:pointer;padding:0;line-height:1;
+}
+#log-panel-close:hover{color:var(--text)}
+
+/* ── SELF AREA ────────────────────────────────────── */
+#self-area {
+  position:absolute;bottom:0;left:0;right:0;
+  z-index:6;
+  background:linear-gradient(0deg,#04080f 62%,transparent 100%);
+  padding:6px 10px 8px;
+}
+#self-row {
+  display:flex;align-items:flex-end;gap:8px;
+}
+
+#self-info-card {
+  background:rgba(8,15,28,.94);
+  border:1px solid var(--border2);border-left:3px solid #3b82f6;
+  border-radius:13px;padding:9px 11px;
+  min-width:155px;max-width:195px;flex-shrink:0;
+  backdrop-filter:blur(4px);
+  transition:border-left-color .3s,box-shadow .3s;
+}
+#self-info-card.is-my-turn {
+  border-left-color:var(--gold);
+  box-shadow:0 0 14px #f0c04018;
+}
+#self-info-top {
+  display:flex;align-items:center;gap:7px;margin-bottom:5px;
+}
+#self-avatar {
+  width:30px;height:30px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:.78rem;
+  flex-shrink:0;text-transform:uppercase;
+}
+#self-name { font-size:.8rem;font-weight:700;color:#60a5fa; }
+#self-identity-row { font-size:.64rem;color:var(--text-muted);margin-top:1px; }
+#self-stat-row { display:flex;gap:4px;margin-bottom:4px;flex-wrap:wrap; }
+#self-progress-row {
+  font-size:.64rem;color:var(--text-muted);
+  border-top:1px solid var(--border);padding-top:3px;margin-top:2px;
+}
+
+#hand-wrapper {
+  flex:1;min-width:0;
+  display:flex;flex-direction:column;
+}
+#response-overlay {
+  display:none;
+  background:linear-gradient(90deg,#0e1928,#1a0f2a);
+  border:1px solid var(--gold);border-bottom:none;
+  border-radius:10px 10px 0 0;
+  padding:6px 12px;
+  flex-direction:row;align-items:center;gap:10px;
+}
+#my-hand {
+  padding:7px 10px;
+  border:1px solid var(--border2);
+  border-radius:0 0 10px 10px;
+  background:linear-gradient(180deg,#090d16 0%,#0c1020 100%);
+}
+#my-hand.standalone {
+  border-radius:10px;
+}
+#my-hand h3 {
+  font-size:.7rem;color:var(--text-muted);margin-bottom:6px;
+  letter-spacing:1.5px;text-transform:uppercase;
+}
+
+#self-secrets-card {
+  background:rgba(8,15,28,.94);
+  border:1px solid var(--border2);
+  border-radius:13px;padding:8px 10px;
+  min-width:95px;max-width:155px;flex-shrink:0;
+  backdrop-filter:blur(4px);
+  align-self:flex-end;
+}
+#self-secrets-title {
+  font-size:.6rem;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;
+}
+#self-secrets-chips { display:flex;gap:3px;flex-wrap:wrap; }
+
+#status-bar {
+  background:transparent;border-top:none;
+  padding:3px 2px 0;
+  font-size:.7rem;color:var(--text-muted);
+  display:flex;gap:10px;align-items:center;
+  margin-top:3px;
+}
+#role-skill-row {
+  display:none;flex-direction:column;
+  padding:4px 0 0;border-top:1px solid var(--border);margin-top:4px;
+}
+#role-skill-row .btn-role-skill { font-size:.7rem;padding:4px 10px; }
+#role-task-hint { font-size:.64rem;color:var(--text-muted);margin-top:2px;line-height:1.4; }
+
+/* ── MOBILE: simplified fallback ──────────────────── */
+@media(max-width:768px){
+  #game {
+    position:static;height:auto;min-height:100vh;
+    overflow:visible;
+    background:var(--bg);
+    background-image:
+      radial-gradient(ellipse at 15% 0%,#162040 0%,transparent 55%),
+      radial-gradient(ellipse at 85% 100%,#1a0d2a 0%,transparent 55%);
+  }
+  #seats-area,#table-area,#log-toggle-btn,#log-panel { display:none !important; }
+  #self-area { position:static;background:none;padding:0; }
+  #self-row  { flex-direction:column;gap:0; }
+  #self-info-card,#self-secrets-card { display:none; }
+  #hand-wrapper { width:100%; }
+  #response-overlay { border-radius:0; }
+  #my-hand { border-radius:0;border-left:none;border-right:none;border-top:1px solid var(--border2); }
+  #my-hand.standalone { border-radius:0; }
+  #status-bar {
+    background:#0c1020;border-top:1px solid var(--border);
+    padding:7px 16px;font-size:.76px;
+  }
+  #mobile-board { display:flex !important; }
 }
 </style>
 </head>
@@ -1127,72 +1434,108 @@ button{cursor:pointer;font-family:inherit}
   <div id="lobby-error" style="color:#fca5a5;font-size:.86rem"></div>
 </div>
 
-<!-- GAME -->
-<div id="game" style="display:none;flex-direction:column;height:calc(100vh - 55px)">
-  <div style="flex:1;display:grid;grid-template-columns:1fr 270px;overflow:hidden">
-    <!-- Board -->
-    <div class="board" id="board">
-      <div id="transit-banner">
-        <h3>📨 機密傳遞中 <span id="decision-timer"></span></h3>
-        <div class="transit-row" id="transit-info"></div>
-        <div class="transit-actions" id="transit-actions"></div>
-      </div>
-      <div id="players-area"></div>
-      <!-- 手機版 log 收合區 -->
-      <details id="mobile-log" style="display:none;margin-top:8px">
-        <summary style="color:var(--text-muted);font-size:.78rem;cursor:pointer;padding:6px 0">📋 遊戲紀錄</summary>
-        <div id="mobile-log-area" style="max-height:180px;overflow-y:auto;font-size:.74rem;color:var(--text-muted);line-height:1.7;padding:6px 0"></div>
-      </details>
+<!-- GAME (board game layout) -->
+<div id="game" style="display:none">
+
+  <!-- Opponent seat cards -->
+  <div id="seats-area"></div>
+
+  <!-- Center oval table -->
+  <div id="table-area">
+    <div id="table-inner">
+      <div id="table-idle">● 等待傳遞 ●</div>
     </div>
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <div class="sidebar-title">遊戲紀錄</div>
-      <div class="log-area" id="log-area"></div>
-      <div id="emoji-bar">
-        <button class="btn-emoji" onclick="sendEmoji('👍')">👍</button>
-        <button class="btn-emoji" onclick="sendEmoji('😱')">😱</button>
-        <button class="btn-emoji" onclick="sendEmoji('🤣')">🤣</button>
-        <button class="btn-emoji" onclick="sendEmoji('😤')">😤</button>
-        <button class="btn-emoji" onclick="sendEmoji('🎉')">🎉</button>
-        <button class="btn-emoji" onclick="sendEmoji('💀')">💀</button>
+  </div>
+
+  <!-- Log toggle button -->
+  <button id="log-toggle-btn" onclick="toggleLog()">📋 記錄</button>
+
+  <!-- Log panel (slides in from right) -->
+  <div id="log-panel">
+    <div class="log-panel-hdr">
+      <span>遊戲紀錄</span>
+      <button id="log-panel-close" onclick="toggleLog()">✕</button>
+    </div>
+    <div class="log-area" id="log-area"></div>
+    <div id="emoji-bar">
+      <button class="btn-emoji" onclick="sendEmoji('👍')">👍</button>
+      <button class="btn-emoji" onclick="sendEmoji('😱')">😱</button>
+      <button class="btn-emoji" onclick="sendEmoji('🤣')">🤣</button>
+      <button class="btn-emoji" onclick="sendEmoji('😤')">😤</button>
+      <button class="btn-emoji" onclick="sendEmoji('🎉')">🎉</button>
+      <button class="btn-emoji" onclick="sendEmoji('💀')">💀</button>
+    </div>
+    <div class="chat-area">
+      <div id="chat-log"></div>
+      <div id="chat-input-row">
+        <input id="chat-input" placeholder="聊天…" maxlength="100" onkeydown="if(event.key==='Enter')sendChat()">
+        <button id="chat-send" onclick="sendChat()">發送</button>
       </div>
-      <div class="chat-area">
-        <div id="chat-log"></div>
-        <div id="chat-input-row">
-          <input id="chat-input" placeholder="聊天…" maxlength="100" onkeydown="if(event.key==='Enter')sendChat()">
-          <button id="chat-send" onclick="sendChat()">發送</button>
+    </div>
+  </div>
+
+  <!-- Mobile board (hidden on desktop) -->
+  <div id="mobile-board" style="display:none;flex-direction:column;gap:8px;padding:10px">
+    <div id="mobile-transit-banner" style="display:none"></div>
+    <div id="mobile-players-area"></div>
+  </div>
+
+  <!-- Self area (bottom) -->
+  <div id="self-area">
+    <div id="self-row">
+
+      <!-- Self info card -->
+      <div id="self-info-card" data-pid="">
+        <div id="self-info-top">
+          <div id="self-avatar">A</div>
+          <div style="min-width:0">
+            <div id="self-name">玩家</div>
+            <div id="self-identity-row"></div>
+          </div>
+        </div>
+        <div id="self-stat-row"></div>
+        <div id="self-progress-row" style="display:none"></div>
+        <div id="role-skill-row">
+          <button class="btn-role-skill" id="role-skill-btn" onclick="openRoleSkillDialog()">⚡ 使用技能</button>
+          <span id="role-task-hint"></span>
         </div>
       </div>
+
+      <!-- Hand wrapper: response overlay + hand cards -->
+      <div id="hand-wrapper">
+        <div id="response-overlay">
+          <div id="response-box">
+            <h2 id="resp-title">響應視窗</h2>
+            <p id="resp-desc" style="flex:1"></p>
+            <span id="pass-timer"></span>
+            <div class="response-btns" id="resp-btns"></div>
+          </div>
+        </div>
+        <div id="my-hand" class="standalone">
+          <h3>手牌 <span id="hand-count"></span>
+            <span id="role-info-badge" style="margin-left:8px"></span>
+          </h3>
+          <div id="hand-cards"></div>
+        </div>
+      </div>
+
+      <!-- My secrets card -->
+      <div id="self-secrets-card">
+        <div id="self-secrets-title">機密檔案</div>
+        <div id="self-secrets-chips"></div>
+      </div>
+
+    </div>
+    <!-- Status strip -->
+    <div id="status-bar">
+      <span id="phase-label"></span>
+      <span id="turn-label"></span>
+      <span id="error-toast"></span>
+      <span style="margin-left:auto" id="deck-info"></span>
+      <button onclick="toggleRef()" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-muted);cursor:pointer;font-size:.72rem;padding:2px 9px;margin-left:8px;font-family:inherit" title="牌庫速查">📖 牌庫</button>
     </div>
   </div>
-  <!-- Response banner -->
-  <div id="response-overlay">
-    <div id="response-box">
-      <h2 id="resp-title">響應視窗</h2>
-      <p id="resp-desc" style="flex:1"></p>
-      <span id="pass-timer"></span>
-      <div class="response-btns" id="resp-btns"></div>
-    </div>
-  </div>
-  <!-- Hand -->
-  <div id="my-hand">
-    <h3>手牌 <span id="hand-count"></span>
-      <span id="role-info-badge" style="margin-left:10px"></span>
-    </h3>
-    <div id="hand-cards"></div>
-    <div id="role-skill-row" style="display:none;padding:6px 0 2px;border-top:1px solid var(--border);margin-top:6px">
-      <button class="btn-role-skill" id="role-skill-btn" onclick="openRoleSkillDialog()">⚡ 使用技能</button>
-      <span id="role-task-hint" style="font-size:.72rem;color:var(--text-muted);margin-left:10px"></span>
-    </div>
-  </div>
-  <!-- Status bar -->
-  <div id="status-bar">
-    <span id="phase-label"></span>
-    <span id="turn-label"></span>
-    <span id="error-toast"></span>
-    <span style="margin-left:auto" id="deck-info"></span>
-    <button onclick="toggleRef()" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-muted);cursor:pointer;font-size:.75rem;padding:2px 9px;margin-left:8px" title="牌庫速查">📖 牌庫</button>
-  </div>
+
 </div>
 
 <!-- Tutorial Hint Box -->
@@ -1304,7 +1647,7 @@ function _clearDecisionTimer() {
 }
 
 function _renderTimer() {
-  const el = document.getElementById('decision-timer');
+  const el = document.getElementById('table-timer') || document.getElementById('decision-timer');
   if (!el) return;
   if (_timerSecs > 0) {
     el.textContent = `⏱ ${_timerSecs}s`;
@@ -2258,6 +2601,9 @@ let _lastTurnPid = null;
 let _lastLogLen  = 0;
 
 function renderGame(d){
+  // full-screen board: hide header for max space
+  document.getElementById('header').style.display='none';
+
   _detectTransitAnim(d);
   // turn-change sound
   if(d.current_turn_pid && d.current_turn_pid !== _lastTurnPid){
@@ -2270,8 +2616,16 @@ function renderGame(d){
   _lastLogLen = d.log.length;
   // game-over sound
   if(d.phase==='game_over' && _lastTurnPid !== 'done'){ SFX.play('win'); _lastTurnPid='done'; }
-  renderPlayers(d);
-  renderTransit(d);
+
+  const isMobile = window.innerWidth <= 768;
+  if(isMobile){
+    renderMobilePlayers(d);
+    renderMobileTransit(d);
+  } else {
+    renderSeats(d);
+    renderTableTransit(d);
+  }
+  renderSelfInfo(d);
   renderHand(d);
   renderLog(d);
   renderStatus(d);
@@ -2307,74 +2661,118 @@ function _winProgress(p){
   return '';
 }
 
-function renderPlayers(d){
-  const area=document.getElementById('players-area');
-  area.innerHTML='';
-  d.players.forEach(p=>{
-    const isMe = p.pid === myPid;
-    const isActive = p.pid === d.current_turn_pid;
-    const wc = (isMe && p.identity) ? WIN_COND[p.identity] : null;
-    const progress = isMe ? _winProgress(p) : '';
-    const roleTask = p.role ? ROLE_TASK_DESC[p.role] : null;
+// ── AVATAR COLORS ──────────────────────────────────────────────────────────
+const AVATAR_COLORS = [
+  {bg:'#1e3a5f',text:'#93c5fd',border:'#3b82f6'},
+  {bg:'#4c1d1d',text:'#fca5a5',border:'#ef4444'},
+  {bg:'#1e1040',text:'#c4b5fd',border:'#7c3aed'},
+  {bg:'#1a3a2a',text:'#86efac',border:'#22c55e'},
+  {bg:'#2d2000',text:'#fcd34d',border:'#d97706'},
+  {bg:'#1a1a2e',text:'#818cf8',border:'#6366f1'},
+  {bg:'#1e3a3a',text:'#67e8f9',border:'#06b6d4'},
+];
+function _hashCode(str){ let h=0; for(let i=0;i<str.length;i++) h=(h<<5)-h+str.charCodeAt(i)|0; return h; }
+function _avatarColor(pid){ return AVATAR_COLORS[Math.abs(_hashCode(pid||'')) % AVATAR_COLORS.length]; }
 
+// Seat position class layout by opponent count
+const SEAT_LAYOUTS = {
+  1:['seat-tc'],
+  2:['seat-tl','seat-tr'],
+  3:['seat-tl','seat-tc','seat-tr'],
+  4:['seat-tl','seat-tc','seat-tr','seat-r'],
+  5:['seat-tl','seat-tc','seat-tr','seat-l','seat-r'],
+  6:['seat-tl','seat-tc','seat-tr','seat-l','seat-r','seat-bl'],
+};
+
+function renderSeats(d){
+  const area = document.getElementById('seats-area');
+  area.innerHTML = '';
+  const opponents = d.players.filter(p => p.pid !== myPid);
+  const layout = SEAT_LAYOUTS[Math.min(opponents.length, 6)] || [];
+
+  opponents.forEach((p, idx) => {
+    const posClass = layout[idx] || 'seat-tc';
+    const isActive = p.pid === d.current_turn_pid;
+    const ac = _avatarColor(p.pid);
+    const firstLetter = (p.name||'?')[0];
+
+    const outer = document.createElement('div');
+    outer.className = `seat ${posClass}`;
+    outer.dataset.pid = p.pid;
+
+    let topBadge = '';
+    if(p.is_bankrupt)      topBadge = `<div class="seat-badge-abs seat-badge-bkrpt">💀 破產</div>`;
+    else if(isActive)      topBadge = `<div class="seat-badge-abs seat-badge-turn">▶ 回合中</div>`;
+    const lockBadge = p.is_locked ? `<div class="seat-badge-locked">🔒</div>` : '';
+
+    const dots = (p.secrets||[]).map(s=>{
+      const cls = s.color==='dual'?'dual':s.color;
+      return `<span class="seat-sdot ${cls}" title="${esc(s.name)}"></span>`;
+    }).join('');
+
+    outer.innerHTML = `
+      ${topBadge}${lockBadge}
+      <div class="seat-card${isActive?' active-turn':''}${p.is_bankrupt?' bankrupt':''}">
+        <div class="seat-card-head">
+          <div class="seat-avatar" style="background:${ac.bg};color:${ac.text};border-color:${ac.border}">${esc(firstLetter)}</div>
+          <div class="seat-name">${p.is_bot?'🤖 ':''}${esc(p.name)}</div>
+        </div>
+        <div class="seat-stat-row">
+          <span class="seat-sstat blue">🔵${p.blue}</span>
+          <span class="seat-sstat red">🔴${p.red}</span>
+          <span class="seat-sstat black">⚫${p.black}</span>
+          <span class="seat-sstat hand">🃏${p.hand_count}</span>
+        </div>
+        <div class="seat-sdots">${dots||'<span style="color:#1a2a1a;font-size:.6rem">無機密</span>'}</div>
+      </div>`;
+    area.appendChild(outer);
+  });
+}
+
+function renderPlayers(d){
+  // kept for mobile fallback
+  const area = document.getElementById('mobile-players-area');
+  if(!area) return;
+  area.innerHTML='';
+  d.players.filter(p=>p.pid!==myPid).forEach(p=>{
+    const isActive = p.pid === d.current_turn_pid;
     const div = document.createElement('div');
     div.className = 'player-row'+(isActive?' active-turn':'')+(p.is_bankrupt?' bankrupt':'');
     div.dataset.pid = p.pid;
-    div.dataset.isMe = isMe;
-
-    const topBar = `
+    div.innerHTML = `
       <div class="prow-top">
-        <span class="pname${isMe?' me':''}">${p.is_bot?'🤖 ':''}${esc(p.name)}${isMe?' (我)':''}</span>
+        <span class="pname">${p.is_bot?'🤖 ':''}${esc(p.name)}</span>
         ${isActive?'<span class="badge badge-turn">回合中</span>':''}
         ${p.is_bankrupt?'<span class="badge badge-bankrupt">破產</span>':''}
-        ${p.is_locked?'<span class="badge badge-locked">🔒 鎖定</span>':''}
-      </div>`;
-
-    const statsBar = `
+        ${p.is_locked?'<span class="badge badge-locked">🔒</span>':''}
+      </div>
       <div class="player-meta">
         <span class="badge badge-blue">藍 ${p.blue}</span>
         <span class="badge badge-red">紅 ${p.red}</span>
         <span class="badge badge-black">黑 ${p.black}</span>
-        <span style="color:var(--text-muted);font-size:.75rem">手牌 ${p.hand_count} 張</span>
-      </div>`;
-
-    // Identity / role block
-    let identityBlock = '';
-    if(isMe && wc){
-      identityBlock = `
-        <div class="prow-identity" style="border-color:${wc.color}33;background:${wc.color}0d;flex-direction:column;gap:4px">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <span style="color:${wc.color};font-weight:700;font-size:.82rem">${wc.icon} ${wc.label}</span>
-            ${p.role ? `<span style="color:#a78bfa;font-size:.76rem">🎭 ${esc(p.role)}</span>` : ''}
-          </div>
-          <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">
-            <span style="color:${wc.color};font-size:.74rem;opacity:.8">${wc.desc}</span>
-            <b style="color:${wc.color};font-size:.88rem">${progress}</b>
-          </div>
-          ${roleTask ? `<div style="color:var(--text-muted);font-size:.70rem;border-top:1px solid ${wc.color}22;padding-top:3px">任務：${esc(roleTask)}</div>` : ''}
-        </div>`;
-    } else if(p.role){
-      identityBlock = `
-        <div class="prow-identity" style="border-color:#7c3aed33;background:#1e10400d;flex-direction:column;gap:3px">
-          <span style="color:#a78bfa;font-weight:700;font-size:.78rem">🎭 ${esc(p.role)}</span>
-          ${roleTask ? `<span style="color:var(--text-muted);font-size:.70rem">任務：${esc(roleTask)}</span>` : ''}
-        </div>`;
-    }
-
-    div.innerHTML = `
-      ${topBar}
-      <div class="player-panels">
-        <div>
-          ${identityBlock}
-          ${statsBar}
-        </div>
-        <div class="panel-right">
-          <span class="secrets-label">持有機密</span>
-          <div class="secrets-row">${renderSecrets(p.secrets, isMe, p.pid)}</div>
-        </div>
-      </div>`;
+        <span style="color:var(--text-muted);font-size:.75rem">手牌 ${p.hand_count}</span>
+      </div>
+      <div class="secrets-row">${renderSecrets(p.secrets, false, p.pid)}</div>`;
     area.appendChild(div);
   });
+}
+
+function renderMobilePlayers(d){ renderPlayers(d); }
+
+function renderMobileTransit(d){
+  const banner = document.getElementById('mobile-transit-banner');
+  if(!banner) return;
+  if(!d.transit){ banner.style.display='none'; return; }
+  const t = d.transit;
+  const cardCls = t.card.color==='unknown'?'unknown':t.card.color;
+  const modeLabel = {encrypted:'加密雲端',public:'公開新聞稿',private:'私人信件'}[t.mode]||t.mode;
+  banner.style.display='block';
+  banner.innerHTML=`
+    <div style="background:linear-gradient(135deg,#0d1e38,#180d2e);border:1px solid var(--blue);border-radius:10px;padding:10px 12px">
+      <div style="font-size:.78rem;color:#93c5fd;margin-bottom:6px">📨 機密傳遞中</div>
+      <span class="transit-card ${cardCls}">${esc(t.card.name)}</span>
+      <span style="color:var(--text-muted);font-size:.76rem;margin-left:8px">${modeLabel} · ${esc(t.sender_name)} → ${esc(t.current_target_name)}</span>
+    </div>`;
 }
 
 function renderSecrets(secrets, isMe, pid){
@@ -2386,43 +2784,125 @@ function renderSecrets(secrets, isMe, pid){
   }).join('');
 }
 
-function renderTransit(d){
-  const banner=document.getElementById('transit-banner');
-  const info=document.getElementById('transit-info');
-  const actions=document.getElementById('transit-actions');
+// ── SELF INFO CARD ─────────────────────────────────────────────────────────
+function renderSelfInfo(d){
+  const me = d.players.find(p=>p.pid===myPid);
+  if(!me) return;
+  const isActive = d.current_turn_pid === myPid;
+  const wc = me.identity ? WIN_COND[me.identity] : null;
+  const avatarColor = {board:'#3b82f6',vulture:'#ef4444',independent:'#f0c040'}[me.identity]||'#3b82f6';
+
+  const card = document.getElementById('self-info-card');
+  if(card){
+    card.dataset.pid = me.pid;
+    card.classList.toggle('is-my-turn', isActive);
+    if(!isActive) card.style.borderLeftColor = avatarColor;
+    else card.style.borderLeftColor = '';
+  }
+
+  const avatarEl = document.getElementById('self-avatar');
+  if(avatarEl){
+    avatarEl.textContent = (me.name||'?')[0];
+    avatarEl.style.background = avatarColor+'22';
+    avatarEl.style.color = avatarColor;
+    avatarEl.style.borderColor = avatarColor;
+  }
+  const nameEl = document.getElementById('self-name');
+  if(nameEl) nameEl.textContent = (me.is_bot?'🤖 ':'')+me.name+' (我)';
+
+  const identEl = document.getElementById('self-identity-row');
+  if(identEl){
+    identEl.innerHTML = wc
+      ? `<span style="color:${wc.color}">${wc.icon} ${wc.label}</span>`+(me.role?` · <span style="color:#a78bfa">🎭 ${esc(me.role)}</span>`:'')
+      : (me.role?`<span style="color:#a78bfa">🎭 ${esc(me.role)}</span>`:'');
+  }
+
+  const statEl = document.getElementById('self-stat-row');
+  if(statEl) statEl.innerHTML=`
+    <span class="seat-sstat blue">🔵 ${me.blue}</span>
+    <span class="seat-sstat red">🔴 ${me.red}</span>
+    <span class="seat-sstat black">⚫ ${me.black}</span>`;
+
+  const progEl = document.getElementById('self-progress-row');
+  if(progEl){
+    const pt = wc ? `${wc.desc} · ${_winProgress(me)}` : '';
+    progEl.textContent = pt;
+    progEl.style.display = pt ? 'block' : 'none';
+  }
+
+  // Update secrets in side card
+  const chips = document.getElementById('self-secrets-chips');
+  if(chips) chips.innerHTML = (me.secrets&&me.secrets.length)
+    ? renderSecrets(me.secrets, true, me.pid)
+    : '<span style="color:#1a2a1a;font-size:.7rem">（無機密）</span>';
+
+  // Locked indicator
+  let lockEl = document.getElementById('self-info-card')?.querySelector('.self-lock-indicator');
+  if(me.is_locked && !lockEl){
+    lockEl = document.createElement('div');
+    lockEl.className = 'self-lock-indicator';
+    lockEl.style.cssText = 'font-size:.64rem;color:#c4b5fd;background:#1e1040;border:1px solid #7c3aed;border-radius:4px;padding:1px 6px;margin-top:3px;display:inline-block';
+    lockEl.textContent = '🔒 被鎖定中';
+    document.getElementById('self-info-card')?.appendChild(lockEl);
+  } else if(!me.is_locked && lockEl){
+    lockEl.remove();
+  }
+}
+
+// ── LOG TOGGLE ─────────────────────────────────────────────────────────────
+function toggleLog(){
+  document.getElementById('log-panel').classList.toggle('open');
+}
+
+function renderTransit(d){ /* no-op: desktop uses renderTableTransit, mobile uses renderMobileTransit */ }
+
+function renderTableTransit(d){
+  const tableArea = document.getElementById('table-area');
+  const inner = document.getElementById('table-inner');
+  if(!tableArea||!inner) return;
+
   if(!d.transit){
-    banner.style.display='none';
-    banner.classList.remove('my-decision');
+    tableArea.classList.remove('my-decision');
+    _clearDecisionTimer();
+    inner.innerHTML=`<div id="table-idle" style="color:#1a4a2a;font-size:.68rem;letter-spacing:2.5px;text-transform:uppercase;opacity:.7">● 等待傳遞 ●</div>`;
     return;
   }
-  banner.style.display='block';
-  const t=d.transit;
-  const cardCls=t.card.color==='unknown'?'unknown':t.card.color;
-  const modeLabel={encrypted:'加密雲端',public:'公開新聞稿',private:'私人信件'}[t.mode]||t.mode;
-  info.innerHTML=`
-    <span class="transit-card ${cardCls}">${esc(t.card.name)}</span>
-    <span class="transit-meta">${modeLabel} · 由 <b>${esc(t.sender_name)}</b> 傳出 → 詢問 <b>${esc(t.current_target_name)}</b></span>
-  `;
-  actions.innerHTML='';
 
-  const win=d.response_window;
+  const t = d.transit;
+  const cardCls = t.card.color==='unknown'?'unknown':t.card.color;
+  const modeLabel = {encrypted:'🔒 加密雲端',public:'📢 公開新聞稿',private:'✉️ 私函'}[t.mode]||t.mode;
+  const win = d.response_window;
   const isMyDecision = d.phase==='in_transit' && win && win.wtype==='pre_receive'
     && t.current_target===myPid && win.waiting_for.includes(myPid);
 
   if(isMyDecision){
-    banner.classList.add('my-decision');
+    tableArea.classList.add('my-decision');
     _startDecisionTimer(win.fid);
-    const me=d.players.find(p=>p.pid===myPid);
+    const me = d.players.find(p=>p.pid===myPid);
     const lockedBySender = me?.locked_by && me.locked_by === t.sender;
-    const isReturnToSender=t.going_back && t.sender===myPid;
-    const canRefuse=!lockedBySender && !isReturnToSender;
-    actions.appendChild(btn('接收','btn-sm btn-accept',()=>{_clearDecisionTimer();SFX.play('accept');socket.emit('accept',{});}));
+    const isReturnToSender = t.going_back && t.sender===myPid;
+    const canRefuse = !lockedBySender && !isReturnToSender;
+    inner.innerHTML=`
+      <div style="font-size:.6rem;color:var(--gold);font-weight:700;letter-spacing:.8px">📨 機密傳到你了！</div>
+      <div class="tcard ${cardCls}">${esc(t.card.name)}</div>
+      <div id="table-meta">${modeLabel} · 來自 <b>${esc(t.sender_name)}</b></div>
+      <div id="table-timer"></div>
+      <div id="table-actions"></div>`;
+    _renderTimer();
+    const actEl = document.getElementById('table-actions');
+    actEl.appendChild(btn('接收','btn-sm btn-accept',()=>{_clearDecisionTimer();SFX.play('accept');socket.emit('accept',{});}));
     if(canRefuse){
-      actions.appendChild(btn('拒收','btn-sm btn-refuse',()=>{_clearDecisionTimer();SFX.play('refuse');socket.emit('refuse',{});}));
+      actEl.appendChild(btn('拒收','btn-sm btn-refuse',()=>{_clearDecisionTimer();SFX.play('refuse');socket.emit('refuse',{});}));
     }
   } else {
-    banner.classList.remove('my-decision');
+    tableArea.classList.remove('my-decision');
     if(_timerFid && (!win || _timerFid !== win.fid)) _clearDecisionTimer();
+    inner.innerHTML=`
+      <div style="font-size:.6rem;color:var(--text-muted);letter-spacing:.8px">📨 機密傳遞中</div>
+      <div class="tcard ${cardCls}">${esc(t.card.name)}</div>
+      <div id="table-meta">${modeLabel}<br>${esc(t.sender_name)} → ${esc(t.current_target_name)}</div>
+      <div id="table-timer"></div>`;
+    _renderTimer();
   }
 }
 
@@ -2452,7 +2932,6 @@ function renderHand(d){
       isMyTurn && !used
     );
     skillRow.style.display = isActive ? 'flex' : 'none';
-    skillRow.style.alignItems = 'center';
     skillBtn.disabled = !canUse;
     skillBtn.title = me.role_used && me.role!=='數據掮客' ? '技能已使用' : '';
     // Task hint
@@ -2610,13 +3089,19 @@ function selectSecretToDestroy(pid, iid){
   socket.emit('play_function',{card_iid:destroyCard.iid,extra:{target_pid:pid,target_iid:iid}});
 }
 
+function _setResponseVisible(visible){
+  const overlay = document.getElementById('response-overlay');
+  const hand = document.getElementById('my-hand');
+  if(overlay) overlay.style.display = visible ? 'flex' : 'none';
+  if(hand) hand.classList.toggle('standalone', !visible);
+}
+
 function renderResponseWindow(d){
-  const overlay=document.getElementById('response-overlay');
   const win=d.response_window;
   const btns=document.getElementById('resp-btns');
 
   if(d.phase==='choose_card' && d.current_turn_pid===myPid){
-    overlay.style.display='flex';
+    _setResponseVisible(true);
     _clearPassTimer();
     document.getElementById('resp-title').textContent='選牌傳出';
     document.getElementById('resp-desc').textContent='點手牌選擇【傳出】或【使用功能】，可連續使用功能牌再傳出。';
@@ -2625,17 +3110,17 @@ function renderResponseWindow(d){
   }
 
   if(!win || d.phase==='game_over'){
-    overlay.style.display='none';
+    _setResponseVisible(false);
     _clearPassTimer();
     return;
   }
 
   const inWaiting=win.waiting_for.includes(myPid);
-  if(!inWaiting){ overlay.style.display='none'; _clearPassTimer(); return; }
+  if(!inWaiting){ _setResponseVisible(false); _clearPassTimer(); return; }
 
   if(win.wtype==='pre_receive'){
-    if(win.target===myPid){ overlay.style.display='none'; _clearPassTimer(); return; }
-    overlay.style.display='flex';
+    if(win.target===myPid){ _setResponseVisible(false); _clearPassTimer(); return; }
+    _setResponseVisible(true);
     _startPassTimer(win.fid);
     const targetName=d.players.find(p=>p.pid===win.target)?.name||'?';
     document.getElementById('resp-title').textContent='接收響應';
@@ -2646,7 +3131,7 @@ function renderResponseWindow(d){
   }
 
   if(win.wtype==='pre_transmit'){
-    overlay.style.display='flex';
+    _setResponseVisible(true);
     _startPassTimer(win.fid);
     const triggeredName=d.players.find(p=>p.pid===win.triggered_by)?.name||'?';
     document.getElementById('resp-title').textContent='傳出宣言';
@@ -2656,7 +3141,7 @@ function renderResponseWindow(d){
     return;
   }
 
-  overlay.style.display='none';
+  _setResponseVisible(false);
   _clearPassTimer();
 }
 
@@ -2676,9 +3161,6 @@ function renderLog(d){
     el.appendChild(div);
   });
   el.scrollTop=el.scrollHeight;
-  // 同步到手機版 log
-  const mob=document.getElementById('mobile-log-area');
-  if(mob) mob.innerHTML=d.log.slice(-30).map(m=>`<div>${m}</div>`).join('');
 }
 
 function renderStatus(d){
@@ -2974,10 +3456,11 @@ function sendEmoji(emoji){
 }
 
 function _showEmojiFloat(pid, emoji){
-  // 找到對應玩家的 player-row 元素
-  const row = document.querySelector(`.player-row[data-pid="${pid}"]`);
-  const anchor = row || document.getElementById('players-area');
-  if(!anchor) return;
+  // Support both seat cards (desktop) and player rows (mobile)
+  const row = document.querySelector(`.seat[data-pid="${pid}"]`)
+    || document.querySelector(`.player-row[data-pid="${pid}"]`)
+    || document.getElementById('seats-area');
+  const anchor = row;
   const rect = anchor.getBoundingClientRect();
   const el = document.createElement('div');
   el.className = 'emoji-float';
