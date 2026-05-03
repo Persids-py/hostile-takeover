@@ -1204,7 +1204,8 @@ button{cursor:pointer;font-family:inherit}
 }
 
 #hand-wrapper {
-  flex:1;min-width:0;max-width:420px;
+  flex:0 1 auto;
+  min-width:220px;max-width:360px;
   display:flex;flex-direction:column;
 }
 #response-overlay {
@@ -1250,10 +1251,43 @@ button{cursor:pointer;font-family:inherit}
 }
 #self-secrets-title {
   font-size:.58rem;color:var(--cy-cyan);opacity:.55;
-  text-transform:uppercase;letter-spacing:1.5px;margin-bottom:5px;
+  text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;
   font-family:monospace;
 }
+#self-secrets-summary {
+  display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px;
+}
 #self-secrets-chips { display:flex;gap:3px;flex-wrap:wrap; }
+#self-skill-info {
+  margin-top:5px;
+  padding-top:4px;
+  border-top:1px solid rgba(0,212,255,.1);
+}
+#self-skill-info .skill-type-lbl {
+  font-size:.56rem;font-family:monospace;letter-spacing:.8px;
+  text-transform:uppercase;opacity:.6;
+}
+#self-skill-info .skill-type-lbl.active { color:var(--cy-cyan); }
+#self-skill-info .skill-type-lbl.passive { color:#a78bfa; }
+#self-skill-info .skill-body {
+  font-size:.63rem;color:var(--text-muted);line-height:1.45;margin-top:1px;
+}
+#self-task-info {
+  margin-top:4px;
+  padding:3px 5px;
+  background:rgba(167,139,250,.06);
+  border-left:2px solid rgba(167,139,250,.35);
+}
+#self-task-info .task-lbl {
+  font-size:.56rem;font-family:monospace;letter-spacing:.8px;
+  color:#a78bfa;text-transform:uppercase;
+}
+#self-task-info .task-body {
+  font-size:.61rem;color:var(--text-muted);line-height:1.4;margin-top:1px;
+}
+#self-task-info .task-prog {
+  font-size:.63rem;color:#fcd34d;margin-top:2px;font-family:monospace;
+}
 
 #status-bar {
   background:transparent;border-top:none;
@@ -1633,6 +1667,8 @@ button{cursor:pointer;font-family:inherit}
         </div>
         <div id="self-stat-row"></div>
         <div id="self-progress-row" style="display:none"></div>
+        <div id="self-skill-info" style="display:none"></div>
+        <div id="self-task-info" style="display:none"></div>
         <div id="role-skill-row">
           <button class="btn-role-skill" id="role-skill-btn" onclick="openRoleSkillDialog()">⚡ 使用技能</button>
           <span id="role-task-hint"></span>
@@ -1660,6 +1696,7 @@ button{cursor:pointer;font-family:inherit}
       <!-- My secrets card -->
       <div id="self-secrets-card">
         <div id="self-secrets-title">機密檔案</div>
+        <div id="self-secrets-summary" style="display:none"></div>
         <div id="self-secrets-chips"></div>
       </div>
 
@@ -2778,6 +2815,18 @@ const WIN_COND = {
 };
 
 // 角色任務說明（client-side lookup，供其他玩家列看）
+const ROLE_SKILL_DESC = {
+  '企業間諜':   {type:'active',  desc:'遊戲開始時，秘密查看任意一名玩家的身份牌'},
+  '雙面公關':   {type:'active',  desc:'指定一名跟蹤對象；若其以陣營勝利條件獲勝，你也共同獲勝'},
+  '王牌律師':   {type:'passive', desc:'手牌上限永久提升為8張'},
+  '禿鷹操盤手': {type:'passive', desc:'每當你傳出的機密被拒收一次，立即抽1張牌（每回合最多2次）'},
+  '財務稽核':   {type:'active',  desc:'每局限1次，免費發動盡職調查效果（秘密查看一名玩家機密區）'},
+  '空殼公司':   {type:'passive', desc:'破產門檻提高為4張有毒資產'},
+  '市場狙擊手': {type:'passive', desc:'你傳出的私人信件被拒收時，可繼續往右順傳而非退回自己'},
+  '白衣騎士':   {type:'active',  desc:'每局限1次，將自己機密區中1張非黑色機密無償傳給指定玩家（對方無法拒收）'},
+  '數據掮客':   {type:'active',  desc:'每回合1次，將手牌中1張牌放回牌庫頂後抽1張'},
+};
+
 const ROLE_TASK_DESC = {
   '企業間諜':   '成功接收由 2 名以上不同玩家主動傳來的機密各≥1張',
   '雙面公關':   '向≥1名董事會傳出被接收的藍/雙色機密，同時也向≥1名禿鷹傳出被接收的紅/雙色機密',
@@ -2832,7 +2881,8 @@ function renderSeats(d){
     const posClass = layout[idx] || 'seat-tc';
     const isActive = p.pid === d.current_turn_pid;
     const ac = _avatarColor(p.pid);
-    const firstLetter = (p.name||'?')[0];
+    const orderIdx = (d.order||[]).indexOf(p.pid);
+    const turnNum = orderIdx >= 0 ? orderIdx + 1 : '?';
 
     const outer = document.createElement('div');
     outer.className = `seat ${posClass}`;
@@ -2852,7 +2902,7 @@ function renderSeats(d){
       ${topBadge}${lockBadge}
       <div class="seat-card${isActive?' active-turn':''}${p.is_bankrupt?' bankrupt':''}">
         <div class="seat-card-head">
-          <div class="seat-avatar" style="background:${ac.bg};color:${ac.text};border-color:${ac.border}">${esc(firstLetter)}</div>
+          <div class="seat-avatar" style="background:${ac.bg};color:${ac.text};border-color:${ac.border}">${turnNum}</div>
           <div class="seat-name">${p.is_bot?'🤖 ':''}${esc(p.name)}</div>
         </div>
         <div class="seat-stat-row">
@@ -2938,9 +2988,11 @@ function renderSelfInfo(d){
     else card.style.borderLeftColor = '';
   }
 
+  const orderIdx = (d.order||[]).indexOf(me.pid);
+  const turnNum = orderIdx >= 0 ? orderIdx + 1 : '?';
   const avatarEl = document.getElementById('self-avatar');
   if(avatarEl){
-    avatarEl.textContent = (me.name||'?')[0];
+    avatarEl.textContent = turnNum;
     avatarEl.style.background = avatarColor+'22';
     avatarEl.style.color = avatarColor;
     avatarEl.style.borderColor = avatarColor;
@@ -2972,7 +3024,47 @@ function renderSelfInfo(d){
   const chips = document.getElementById('self-secrets-chips');
   if(chips) chips.innerHTML = (me.secrets&&me.secrets.length)
     ? renderSecrets(me.secrets, true, me.pid)
-    : '<span style="color:#1a2a1a;font-size:.7rem">（無機密）</span>';
+    : '<span style="color:rgba(0,212,255,.15);font-size:.65rem;font-family:monospace">— 無機密 —</span>';
+
+  // Secrets summary (count by color)
+  const sumEl = document.getElementById('self-secrets-summary');
+  if(sumEl && me.secrets && me.secrets.length){
+    const cnt = {blue:0,red:0,black:0,dual:0};
+    me.secrets.forEach(s=>{ const k=s.color==='dual'?'dual':s.color; if(cnt[k]!==undefined) cnt[k]++; });
+    sumEl.style.display='flex';
+    sumEl.innerHTML = [
+      cnt.blue  ? `<span class="seat-sstat blue">🔵 ${cnt.blue}</span>` :'',
+      cnt.red   ? `<span class="seat-sstat red">🔴 ${cnt.red}</span>`   :'',
+      cnt.black ? `<span class="seat-sstat black">⚫ ${cnt.black}</span>`:'',
+      cnt.dual  ? `<span class="seat-sstat hand">🌀 ${cnt.dual}</span>` :'',
+    ].join('');
+  } else if(sumEl){ sumEl.style.display='none'; }
+
+  // Skill + task description in self-info-card
+  const skillInfoEl = document.getElementById('self-skill-info');
+  const taskInfoEl  = document.getElementById('self-task-info');
+  if(me.role){
+    const sk = ROLE_SKILL_DESC[me.role];
+    if(skillInfoEl && sk){
+      skillInfoEl.style.display = 'block';
+      skillInfoEl.innerHTML =
+        `<span class="skill-type-lbl ${sk.type}">${sk.type==='active'?'⚡ 主動技能':'⬡ 被動技能'}</span>`+
+        `<div class="skill-body">${esc(sk.desc)}</div>`;
+    }
+    if(taskInfoEl && me.identity === 'independent'){
+      const taskDesc = ROLE_TASK_DESC[me.role] || '';
+      const hint = _roleTaskHint(me.role, me.role_task_progress||{});
+      const done = me.role_task_done;
+      taskInfoEl.style.display = 'block';
+      taskInfoEl.innerHTML =
+        `<span class="task-lbl">角色任務${done?' ✓':''}</span>`+
+        `<div class="task-body">${esc(taskDesc)}</div>`+
+        (hint ? `<div class="task-prog">${esc(hint)}</div>` : '');
+    } else if(taskInfoEl){ taskInfoEl.style.display='none'; }
+  } else {
+    if(skillInfoEl) skillInfoEl.style.display='none';
+    if(taskInfoEl)  taskInfoEl.style.display='none';
+  }
 
   // Locked indicator
   let lockEl = document.getElementById('self-info-card')?.querySelector('.self-lock-indicator');
