@@ -915,8 +915,8 @@ button{cursor:pointer;font-family:inherit}
   background: rgba(3,10,22,.92);
   border: 1px solid var(--cy-border);
   border-radius: 0;
-  padding: 9px 11px;
-  width: 152px;
+  padding: 10px 12px;
+  width: 190px;
   position: relative;
   transition: border-color .25s, box-shadow .25s;
   clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
@@ -954,29 +954,38 @@ button{cursor:pointer;font-family:inherit}
   display:flex;align-items:center;gap:6px;margin-bottom:6px;
 }
 .seat-avatar {
-  width:26px;height:26px;border-radius:0;
+  width:32px;height:32px;border-radius:0;
   display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:.72rem;flex-shrink:0;
+  font-weight:800;font-size:.8rem;flex-shrink:0;
   border:1px solid;text-transform:uppercase;
   clip-path: polygon(0 0,calc(100% - 5px) 0,100% 5px,100% 100%,0 100%);
 }
 .seat-name {
-  font-size:.73rem;font-weight:700;
+  font-size:.82rem;font-weight:700;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;
   letter-spacing:.5px;
   color: var(--cy-cyan);
 }
 .seat-stat-row {
-  display:flex;gap:3px;margin-bottom:5px;flex-wrap:wrap;
+  display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap;
 }
 .seat-sstat {
-  border-radius:0;padding:1px 5px;font-size:.6rem;font-weight:700;
+  border-radius:0;padding:2px 6px;font-size:.65rem;font-weight:700;
   letter-spacing:.4px;
 }
 .seat-sstat.blue  {background:rgba(0,100,200,.25);color:#7dd3fc;border:1px solid rgba(59,130,246,.3)}
 .seat-sstat.red   {background:rgba(200,20,40,.22);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
 .seat-sstat.black {background:rgba(30,30,40,.6);color:#6b7280;border:1px solid rgba(75,85,99,.3)}
 .seat-sstat.hand  {background:rgba(10,20,40,.6);color:var(--text-muted);border:1px solid var(--cy-border)}
+.seat-chips-row {
+  display:flex;gap:3px;flex-wrap:wrap;margin-top:2px;
+}
+.seat-chips-row .secret-chip {
+  font-size:.6rem;padding:2px 6px;border-radius:0;
+}
+.seat-chips-row .no-secret {
+  font-size:.6rem;color:rgba(0,212,255,.2);font-family:monospace;letter-spacing:.5px;
+}
 .seat-sdots {display:flex;gap:3px;flex-wrap:wrap;}
 .seat-sdot {
   width:6px;height:6px;border-radius:0;flex-shrink:0;
@@ -1156,8 +1165,8 @@ button{cursor:pointer;font-family:inherit}
   border: 1px solid var(--cy-border);
   border-left: 2px solid var(--cy-cyan);
   border-radius: 0;
-  padding: 9px 11px;
-  min-width:155px;max-width:195px;flex-shrink:0;
+  padding: 10px 13px;
+  min-width:195px;max-width:255px;flex-shrink:0;
   clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
   box-shadow: 0 0 20px rgba(0,0,0,.5), 0 0 10px rgba(0,212,255,.06);
   transition: border-left-color .3s, box-shadow .3s;
@@ -1179,23 +1188,23 @@ button{cursor:pointer;font-family:inherit}
   display:flex;align-items:center;gap:7px;margin-bottom:5px;
 }
 #self-avatar {
-  width:28px;height:28px;border-radius:0;
+  width:34px;height:34px;border-radius:0;
   display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:.75rem;
+  font-weight:800;font-size:.85rem;
   flex-shrink:0;text-transform:uppercase;
   clip-path: polygon(0 0,calc(100% - 5px) 0,100% 5px,100% 100%,0 100%);
 }
-#self-name { font-size:.78rem;font-weight:700;color:var(--cy-cyan);letter-spacing:.5px; }
-#self-identity-row { font-size:.62rem;color:var(--text-muted);margin-top:1px;font-family:monospace; }
-#self-stat-row { display:flex;gap:4px;margin-bottom:4px;flex-wrap:wrap; }
+#self-name { font-size:.86rem;font-weight:700;color:var(--cy-cyan);letter-spacing:.5px; }
+#self-identity-row { font-size:.68rem;color:var(--text-muted);margin-top:2px;font-family:monospace; }
+#self-stat-row { display:flex;gap:5px;margin-bottom:5px;flex-wrap:wrap; }
 #self-progress-row {
-  font-size:.62rem;color:var(--text-muted);
-  border-top:1px solid rgba(0,212,255,.1);padding-top:3px;margin-top:2px;
+  font-size:.65rem;color:var(--text-muted);
+  border-top:1px solid rgba(0,212,255,.1);padding-top:4px;margin-top:3px;
   font-family:monospace;
 }
 
 #hand-wrapper {
-  flex:1;min-width:0;
+  flex:1;min-width:0;max-width:420px;
   display:flex;flex-direction:column;
 }
 #response-overlay {
@@ -1226,8 +1235,8 @@ button{cursor:pointer;font-family:inherit}
   background: rgba(3,10,22,.95);
   border: 1px solid var(--cy-border);
   border-radius: 0;
-  padding: 8px 10px;
-  min-width:95px;max-width:155px;flex-shrink:0;
+  padding: 10px 12px;
+  min-width:140px;max-width:220px;flex-shrink:0;
   align-self:flex-end;
   clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
   box-shadow: 0 4px 20px rgba(0,0,0,.5);
@@ -2834,9 +2843,9 @@ function renderSeats(d){
     else if(isActive)      topBadge = `<div class="seat-badge-abs seat-badge-turn">▶ 回合中</div>`;
     const lockBadge = p.is_locked ? `<div class="seat-badge-locked">🔒</div>` : '';
 
-    const dots = (p.secrets||[]).map(s=>{
+    const secretChips = (p.secrets||[]).map(s=>{
       const cls = s.color==='dual'?'dual':s.color;
-      return `<span class="seat-sdot ${cls}" title="${esc(s.name)}"></span>`;
+      return `<span class="secret-chip ${cls}">${esc(s.name)}</span>`;
     }).join('');
 
     outer.innerHTML = `
@@ -2847,12 +2856,12 @@ function renderSeats(d){
           <div class="seat-name">${p.is_bot?'🤖 ':''}${esc(p.name)}</div>
         </div>
         <div class="seat-stat-row">
-          <span class="seat-sstat blue">🔵${p.blue}</span>
-          <span class="seat-sstat red">🔴${p.red}</span>
-          <span class="seat-sstat black">⚫${p.black}</span>
-          <span class="seat-sstat hand">🃏${p.hand_count}</span>
+          <span class="seat-sstat blue">🔵 ${p.blue}</span>
+          <span class="seat-sstat red">🔴 ${p.red}</span>
+          <span class="seat-sstat black">⚫ ${p.black}</span>
+          <span class="seat-sstat hand">🃏 ${p.hand_count}</span>
         </div>
-        <div class="seat-sdots">${dots||'<span style="color:#1a2a1a;font-size:.6rem">無機密</span>'}</div>
+        <div class="seat-chips-row">${secretChips||'<span class="no-secret">— 無機密 —</span>'}</div>
       </div>`;
     area.appendChild(outer);
   });
