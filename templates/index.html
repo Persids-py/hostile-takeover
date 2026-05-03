@@ -859,11 +859,19 @@ button{cursor:pointer;font-family:inherit}
   width:100vw;
   height:100vh;
   overflow:hidden;
+  /* dark felt / luxury casino background */
   background:
-    radial-gradient(ellipse at 50% 120%,#081620 0%,transparent 55%),
-    radial-gradient(ellipse at 20% 110%,#15082a 0%,transparent 42%),
-    radial-gradient(ellipse at 80% 110%,#081522 0%,transparent 42%),
-    #04080f;
+    radial-gradient(ellipse at 50% 46%, #0a1f0e 0%, transparent 58%),
+    radial-gradient(ellipse at 50% 120%, #0c1a10 0%, transparent 50%),
+    radial-gradient(ellipse at 15% 100%, #180a2a 0%, transparent 38%),
+    radial-gradient(ellipse at 85% 100%, #0a1020 0%, transparent 38%),
+    #050a07;
+}
+/* subtle vignette overlay */
+#game::after {
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 48%, transparent 35%, #00000066 100%);
+  pointer-events:none;z-index:0;
 }
 
 /* ── SEATS ────────────────────────────────────────── */
@@ -873,20 +881,22 @@ button{cursor:pointer;font-family:inherit}
 .seat {
   position:absolute;pointer-events:all;
 }
-.seat-tl { top:7%;  left:3%; }
-.seat-tc { top:1%;  left:50%; transform:translateX(-50%); }
-.seat-tr { top:7%;  right:3%; }
-.seat-l  { top:46%; left:.8%; transform:translateY(-50%); }
-.seat-r  { top:46%; right:.8%; transform:translateY(-50%); }
-.seat-bl { top:78%; left:3%; }
+/* Seats hugging the table perimeter — table center is at 50%,46% */
+.seat-tl { top:9%;  left:17%; }
+.seat-tc { top:2%;  left:50%; transform:translateX(-50%); }
+.seat-tr { top:9%;  right:17%; }
+.seat-l  { top:44%; left:4%;  transform:translateY(-50%); }
+.seat-r  { top:44%; right:4%; transform:translateY(-50%); }
+.seat-bl { top:64%; left:16%; }
 
 .seat-card {
-  background:rgba(8,15,28,.94);
-  border:1px solid var(--border2);
+  background:rgba(6,10,18,.96);
+  border:1px solid #2a3a4a;
   border-radius:13px;
-  padding:8px 10px;
-  width:145px;
-  backdrop-filter:blur(6px);
+  padding:9px 11px;
+  width:152px;
+  backdrop-filter:blur(8px);
+  box-shadow:0 4px 20px #00000077;
   transition:border-color .3s,box-shadow .3s;
   position:relative;
 }
@@ -944,17 +954,24 @@ button{cursor:pointer;font-family:inherit}
 /* ── CENTER TABLE ─────────────────────────────────── */
 #table-area {
   position:absolute;
-  top:50%;left:50%;
-  transform:translate(-50%,-58%);
-  width:38vw;min-width:260px;max-width:500px;
-  aspect-ratio:15/9;
-  background:radial-gradient(ellipse at 50% 35%,#071a0d 0%,#030a05 100%);
-  border:2px solid #1a5c2a44;
+  top:46%;left:50%;
+  transform:translate(-50%,-50%);
+  width:52vw;min-width:320px;max-width:680px;
+  aspect-ratio:16/9;
+  /* rich green casino felt */
+  background:
+    radial-gradient(ellipse at 50% 38%, #1a4a22 0%, #0f2e15 35%, #071a0b 65%, #030c05 100%);
+  /* wooden rail border effect */
+  border:4px solid #2a5c1a;
+  outline:2px solid #1a3a0e;
   border-radius:50%;
   box-shadow:
-    0 0 90px #00cc4412,
-    0 0 35px #00440f08,
-    inset 0 0 70px #00000088;
+    0 0 0 6px #1a2e10,
+    0 0 0 8px #0e1e0a,
+    0 0 60px #00cc4420,
+    0 0 120px #008b2d14,
+    inset 0 0 80px #00000066,
+    inset 0 0 30px #0a220d18;
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -963,8 +980,11 @@ button{cursor:pointer;font-family:inherit}
   overflow:hidden;
 }
 #table-area::before {
-  content:'';position:absolute;inset:11px;
-  border-radius:50%;border:1px solid #1a5c2a1a;pointer-events:none;
+  content:'';position:absolute;inset:14px;
+  border-radius:50%;
+  border:1px solid #2a6a2244;
+  box-shadow:inset 0 0 40px #00000033;
+  pointer-events:none;
 }
 #table-inner {
   display:flex;flex-direction:column;align-items:center;
@@ -973,8 +993,8 @@ button{cursor:pointer;font-family:inherit}
   max-width:92%;z-index:1;
 }
 #table-idle {
-  color:#1a4a2a;font-size:.68rem;
-  letter-spacing:2.5px;text-transform:uppercase;opacity:.7;
+  color:#2a6a38;font-size:.68rem;
+  letter-spacing:3px;text-transform:uppercase;opacity:.85;
 }
 .tcard {
   padding:5px 13px;border-radius:7px;
@@ -989,8 +1009,14 @@ button{cursor:pointer;font-family:inherit}
 #table-timer {font-size:.76rem;font-weight:700;padding:2px 9px;border-radius:10px;background:#0d1628}
 #table-actions {display:flex;gap:7px;flex-wrap:wrap;justify-content:center}
 @keyframes tableGlow {
-  0%,100%{box-shadow:0 0 90px #00cc4412,0 0 35px #00440f08,inset 0 0 70px #00000088;border-color:#1a5c2a44}
-  50%{box-shadow:0 0 60px #f0c04036,0 0 20px #f0c04015,inset 0 0 70px #00000088;border-color:#f0c04066}
+  0%,100%{
+    box-shadow:0 0 0 6px #1a2e10,0 0 0 8px #0e1e0a,0 0 60px #00cc4420,0 0 120px #008b2d14,inset 0 0 80px #00000066,inset 0 0 30px #0a220d18;
+    border-color:#2a5c1a;
+  }
+  50%{
+    box-shadow:0 0 0 6px #2a3a10,0 0 0 8px #1a2a0a,0 0 70px #f0c04040,0 0 130px #f0c04022,inset 0 0 80px #00000066,inset 0 0 30px #0a220d18;
+    border-color:#f0c040aa;
+  }
 }
 #table-area.my-decision {
   animation:tableGlow 1.8s ease-in-out infinite;
@@ -1041,19 +1067,21 @@ button{cursor:pointer;font-family:inherit}
 #self-area {
   position:absolute;bottom:0;left:0;right:0;
   z-index:6;
-  background:linear-gradient(0deg,#04080f 62%,transparent 100%);
+  background:linear-gradient(0deg,#050a07 55%,#050a0788 80%,transparent 100%);
   padding:6px 10px 8px;
+  border-top:1px solid #1a2e1a44;
 }
 #self-row {
   display:flex;align-items:flex-end;gap:8px;
 }
 
 #self-info-card {
-  background:rgba(8,15,28,.94);
-  border:1px solid var(--border2);border-left:3px solid #3b82f6;
+  background:rgba(6,10,18,.96);
+  border:1px solid #2a3a4a;border-left:3px solid #3b82f6;
   border-radius:13px;padding:9px 11px;
   min-width:155px;max-width:195px;flex-shrink:0;
-  backdrop-filter:blur(4px);
+  backdrop-filter:blur(8px);
+  box-shadow:0 4px 20px #00000077;
   transition:border-left-color .3s,box-shadow .3s;
 }
 #self-info-card.is-my-turn {
@@ -1091,12 +1119,14 @@ button{cursor:pointer;font-family:inherit}
 }
 #my-hand {
   padding:7px 10px;
-  border:1px solid var(--border2);
+  border:1px solid #2a3a4a;
   border-radius:0 0 10px 10px;
-  background:linear-gradient(180deg,#090d16 0%,#0c1020 100%);
+  background:linear-gradient(180deg,#080c14 0%,#0a0e1a 100%);
+  box-shadow:0 4px 20px #00000077;
 }
 #my-hand.standalone {
   border-radius:10px;
+  border:1px solid #2a3a4a;
 }
 #my-hand h3 {
   font-size:.7rem;color:var(--text-muted);margin-bottom:6px;
@@ -1104,11 +1134,12 @@ button{cursor:pointer;font-family:inherit}
 }
 
 #self-secrets-card {
-  background:rgba(8,15,28,.94);
-  border:1px solid var(--border2);
+  background:rgba(6,10,18,.96);
+  border:1px solid #2a3a4a;
   border-radius:13px;padding:8px 10px;
   min-width:95px;max-width:155px;flex-shrink:0;
-  backdrop-filter:blur(4px);
+  backdrop-filter:blur(8px);
+  box-shadow:0 4px 20px #00000077;
   align-self:flex-end;
 }
 #self-secrets-title {
