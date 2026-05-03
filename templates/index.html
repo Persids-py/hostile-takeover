@@ -1170,7 +1170,7 @@ button{cursor:pointer;font-family:inherit}
   border-right:1px solid var(--cy-border);
   border-radius:0;
   padding:10px 13px;
-  flex:0 0 360px;
+  flex:0 0 430px;
   clip-path:none;
   box-shadow:none;
   overflow-y:auto;
@@ -1209,16 +1209,19 @@ button{cursor:pointer;font-family:inherit}
   position:relative;
 }
 #response-overlay {
-  display:none;
   position:absolute;top:0;left:0;right:0;z-index:10;
   background:linear-gradient(90deg,rgba(8,18,36,.97),rgba(16,8,36,.97));
-  border:none;border-bottom:1px solid rgba(255,179,0,.5);border-radius:0;
-  padding:6px 12px;
-  flex-direction:row;align-items:center;gap:10px;
+  border:none;border-bottom:1px solid rgba(255,179,0,.18);border-radius:0;
+  padding:5px 12px;
+  display:flex;flex-direction:row;align-items:center;gap:10px;
+  min-height:36px;
+}
+#response-overlay.active {
+  border-bottom-color:rgba(255,179,0,.55);
 }
 #my-hand {
   flex:1;
-  padding:8px 12px;
+  padding:46px 12px 8px;
   border:none;border-radius:0;
   background:rgba(3,8,18,.97);
   box-shadow:none;
@@ -1240,7 +1243,7 @@ button{cursor:pointer;font-family:inherit}
   background:rgba(2,6,16,.98);
   border:none;border-left:1px solid var(--cy-border);border-radius:0;
   padding:8px 10px;
-  flex:0 0 260px;min-width:0;max-width:none;
+  flex:0 0 300px;min-width:0;max-width:none;
   align-self:auto;clip-path:none;box-shadow:none;
   position:relative;
   display:flex;flex-direction:column;overflow:hidden;
@@ -3352,12 +3355,18 @@ function selectSecretToDestroy(pid, iid){
 function _setResponseVisible(visible){
   const overlay = document.getElementById('response-overlay');
   const hand = document.getElementById('my-hand');
-  if(overlay) overlay.style.display = visible ? 'flex' : 'none';
-  if(hand){
-    hand.classList.toggle('standalone', !visible);
-    // shift hand content down so overlay doesn't cover cards
-    hand.style.paddingTop = visible ? (overlay ? overlay.offsetHeight + 8 + 'px' : '48px') : '8px';
+  if(overlay){
+    overlay.classList.toggle('active', visible);
+    // clear content when inactive
+    if(!visible){
+      const box = document.getElementById('response-box');
+      if(box) box.style.visibility = 'hidden';
+    } else {
+      const box = document.getElementById('response-box');
+      if(box) box.style.visibility = 'visible';
+    }
   }
+  if(hand) hand.classList.toggle('standalone', !visible);
 }
 
 function renderResponseWindow(d){
