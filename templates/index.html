@@ -1152,131 +1152,143 @@ button{cursor:pointer;font-family:inherit}
 #self-area {
   position:absolute;bottom:0;left:0;right:0;
   z-index:6;
-  background:linear-gradient(0deg,rgba(2,4,10,.97) 60%,rgba(2,4,10,.8) 82%,transparent 100%);
-  padding:6px 10px 8px;
-  border-top:1px solid rgba(0,212,255,.1);
+  background:rgba(2,4,10,.98);
+  border-top:1px solid rgba(0,212,255,.12);
+  padding:0;
+  display:flex;flex-direction:column;
 }
 #self-row {
-  display:flex;align-items:flex-end;gap:8px;
+  display:flex;align-items:stretch;gap:0;
+  flex:1;
 }
 
+/* ── LEFT: player info panel ── */
 #self-info-card {
-  background: rgba(3,10,22,.95);
-  border: 1px solid var(--cy-border);
-  border-left: 2px solid var(--cy-cyan);
-  border-radius: 0;
-  padding: 10px 13px;
-  min-width:195px;max-width:255px;flex-shrink:0;
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
-  box-shadow: 0 0 20px rgba(0,0,0,.5), 0 0 10px rgba(0,212,255,.06);
-  transition: border-left-color .3s, box-shadow .3s;
+  background:rgba(3,10,22,.98);
+  border:none;
+  border-left:2px solid var(--cy-cyan);
+  border-right:1px solid var(--cy-border);
+  border-radius:0;
+  padding:10px 13px;
+  flex:0 0 235px;
+  clip-path:none;
+  box-shadow:none;
+  overflow-y:auto;
+  transition:border-left-color .3s;
   position:relative;
+  display:flex;flex-direction:column;
 }
-#self-info-card::after {
-  content:'';position:absolute;bottom:-1px;right:-1px;
-  width:8px;height:8px;
-  border-bottom:2px solid var(--cy-cyan);
-  border-right:2px solid var(--cy-cyan);
-  opacity:.7;
-}
+#self-info-card::after { display:none; }
 #self-info-card.is-my-turn {
-  border-left-color: var(--cy-amber);
-  box-shadow: 0 0 16px rgba(255,179,0,.12), 0 0 4px rgba(255,179,0,.06);
+  border-left-color:var(--cy-amber);
+  background:rgba(5,12,26,.98);
 }
-#self-info-card.is-my-turn::after { border-color: var(--cy-amber); }
 #self-info-top {
-  display:flex;align-items:center;gap:7px;margin-bottom:5px;
+  display:flex;align-items:center;gap:7px;margin-bottom:5px;flex-shrink:0;
 }
 #self-avatar {
   width:34px;height:34px;border-radius:0;
   display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:.85rem;
-  flex-shrink:0;text-transform:uppercase;
-  clip-path: polygon(0 0,calc(100% - 5px) 0,100% 5px,100% 100%,0 100%);
+  font-weight:800;font-size:.85rem;flex-shrink:0;
+  clip-path:polygon(0 0,calc(100% - 5px) 0,100% 5px,100% 100%,0 100%);
 }
 #self-name { font-size:.86rem;font-weight:700;color:var(--cy-cyan);letter-spacing:.5px; }
 #self-identity-row { font-size:.68rem;color:var(--text-muted);margin-top:2px;font-family:monospace; }
-#self-stat-row { display:flex;gap:5px;margin-bottom:5px;flex-wrap:wrap; }
+#self-stat-row { display:flex;gap:5px;margin-bottom:5px;flex-wrap:wrap;flex-shrink:0; }
 #self-progress-row {
   font-size:.65rem;color:var(--text-muted);
   border-top:1px solid rgba(0,212,255,.1);padding-top:4px;margin-top:3px;
-  font-family:monospace;
+  font-family:monospace;flex-shrink:0;
 }
 
+/* ── CENTER: hand panel ── */
 #hand-wrapper {
-  flex:0 1 auto;
-  min-width:220px;max-width:360px;
+  flex:1 1 0;min-width:0;
   display:flex;flex-direction:column;
 }
 #response-overlay {
   display:none;
   background:linear-gradient(90deg,rgba(8,18,36,.97),rgba(16,8,36,.97));
-  border:1px solid var(--cy-amber);border-bottom:none;
-  border-radius:0;
+  border:none;border-bottom:1px solid rgba(255,179,0,.4);border-radius:0;
   padding:6px 12px;
   flex-direction:row;align-items:center;gap:10px;
+  flex-shrink:0;
 }
 #my-hand {
-  padding:7px 10px;
-  border:1px solid var(--cy-border);
-  border-radius:0;
-  background:linear-gradient(180deg,rgba(4,8,18,.97) 0%,rgba(2,6,16,.97) 100%);
-  box-shadow:0 4px 20px rgba(0,0,0,.6);
+  flex:1;
+  padding:8px 12px;
+  border:none;border-radius:0;
+  background:rgba(3,8,18,.97);
+  box-shadow:none;
+  display:flex;flex-direction:column;
+  overflow:hidden;
 }
-#my-hand.standalone {
-  border-radius:0;
-  border:1px solid var(--cy-border);
-}
+#my-hand.standalone { border:none;border-radius:0; }
 #my-hand h3 {
   font-size:.65rem;color:var(--cy-cyan);opacity:.6;margin-bottom:6px;
   letter-spacing:2px;text-transform:uppercase;font-family:monospace;
+  flex-shrink:0;
+}
+#hand-cards {
+  flex:1;overflow-y:auto;overflow-x:hidden;
 }
 
+/* ── RIGHT: secrets panel ── */
 #self-secrets-card {
-  background: rgba(3,10,22,.95);
-  border: 1px solid var(--cy-border);
-  border-radius: 0;
-  padding: 10px 12px;
-  min-width:140px;max-width:220px;flex-shrink:0;
-  align-self:flex-end;
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
-  box-shadow: 0 4px 20px rgba(0,0,0,.5);
+  background:rgba(2,6,16,.98);
+  border:none;border-left:1px solid var(--cy-border);border-radius:0;
+  padding:8px 10px;
+  flex:0 0 auto;min-width:190px;max-width:none;
+  align-self:auto;clip-path:none;box-shadow:none;
   position:relative;
+  display:flex;flex-direction:column;overflow:hidden;
 }
-#self-secrets-card::after {
-  content:'';position:absolute;bottom:-1px;right:-1px;
-  width:7px;height:7px;
-  border-bottom:2px solid rgba(0,212,255,.4);
-  border-right:2px solid rgba(0,212,255,.4);
-}
+#self-secrets-card::after { display:none; }
 #self-secrets-title {
-  font-size:.58rem;color:var(--cy-cyan);opacity:.55;
+  font-size:.58rem;color:var(--cy-cyan);opacity:.45;
   text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;
-  font-family:monospace;
+  font-family:monospace;flex-shrink:0;
 }
 #self-secrets-summary {
-  display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px;
+  display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;flex-shrink:0;
 }
-#self-secrets-chips { display:flex;gap:3px;flex-wrap:wrap; }
+#self-secrets-chips {
+  flex:1;overflow-y:auto;
+  display:flex;gap:6px;flex-wrap:wrap;align-content:flex-start;
+}
+/* dimmed secret cards */
+.card.sec {
+  width:90px;min-height:122px;
+  opacity:.5;cursor:pointer;
+  filter:saturate(.45) brightness(.72);
+  transition:opacity .2s,filter .2s,transform .18s;
+}
+.card.sec:hover {
+  opacity:.88;filter:saturate(.85) brightness(1.05);
+  transform:translateY(-4px) scale(1.02);
+}
+.card.sec .card-banner { height:24px; }
+.card.sec .card-name   { font-size:.75rem; }
+.card.sec .card-desc   { font-size:.56rem; }
+
+/* skill/task info */
 #self-skill-info {
-  margin-top:5px;
-  padding-top:4px;
-  border-top:1px solid rgba(0,212,255,.1);
+  margin-top:5px;padding-top:4px;
+  border-top:1px solid rgba(0,212,255,.1);flex-shrink:0;
 }
 #self-skill-info .skill-type-lbl {
   font-size:.56rem;font-family:monospace;letter-spacing:.8px;
   text-transform:uppercase;opacity:.6;
 }
-#self-skill-info .skill-type-lbl.active { color:var(--cy-cyan); }
+#self-skill-info .skill-type-lbl.active  { color:var(--cy-cyan); }
 #self-skill-info .skill-type-lbl.passive { color:#a78bfa; }
 #self-skill-info .skill-body {
   font-size:.63rem;color:var(--text-muted);line-height:1.45;margin-top:1px;
 }
 #self-task-info {
-  margin-top:4px;
-  padding:3px 5px;
+  margin-top:4px;padding:3px 5px;
   background:rgba(167,139,250,.06);
-  border-left:2px solid rgba(167,139,250,.35);
+  border-left:2px solid rgba(167,139,250,.35);flex-shrink:0;
 }
 #self-task-info .task-lbl {
   font-size:.56rem;font-family:monospace;letter-spacing:.8px;
@@ -1290,15 +1302,16 @@ button{cursor:pointer;font-family:inherit}
 }
 
 #status-bar {
-  background:transparent;border-top:none;
-  padding:3px 2px 0;
+  background:rgba(2,4,10,.98);border-top:1px solid var(--cy-border);
+  padding:4px 12px;
   font-size:.68rem;color:var(--text-muted);
   display:flex;gap:10px;align-items:center;
-  margin-top:3px;font-family:monospace;
+  font-family:monospace;flex-shrink:0;
 }
 #role-skill-row {
   display:none;flex-direction:column;
   padding:4px 0 0;border-top:1px solid rgba(0,212,255,.1);margin-top:4px;
+  flex-shrink:0;
 }
 #role-skill-row .btn-role-skill { font-size:.7rem;padding:4px 10px; }
 #role-task-hint { font-size:.62rem;color:var(--text-muted);margin-top:2px;line-height:1.4; }
@@ -1314,13 +1327,12 @@ button{cursor:pointer;font-family:inherit}
       radial-gradient(ellipse at 85% 100%,rgba(80,0,160,.08) 0%,transparent 55%);
   }
   #seats-area,#table-area,#log-toggle-btn,#log-panel { display:none !important; }
-  #self-area { position:static;background:none;padding:0; }
-  #self-row  { flex-direction:column;gap:0; }
+  #self-area { position:static;background:none;border-top:none; }
+  #self-row  { flex-direction:column; }
   #self-info-card,#self-secrets-card { display:none; }
-  #hand-wrapper { width:100%; }
-  #response-overlay { border-radius:0; }
-  #my-hand { border-radius:0;border-left:none;border-right:none;border-top:1px solid var(--border2); }
-  #my-hand.standalone { border-radius:0; }
+  #hand-wrapper { width:100%;flex:none; }
+  #my-hand { flex:none;border-top:1px solid var(--border2); }
+  #my-hand.standalone { border:none;border-top:1px solid var(--border2); }
   #status-bar {
     background:rgba(2,6,16,.97);border-top:1px solid var(--cy-border);
     padding:7px 16px;font-size:.76px;
@@ -3020,11 +3032,27 @@ function renderSelfInfo(d){
     progEl.style.display = pt ? 'block' : 'none';
   }
 
-  // Update secrets in side card
+  // Update secrets as dimmed cards
   const chips = document.getElementById('self-secrets-chips');
-  if(chips) chips.innerHTML = (me.secrets&&me.secrets.length)
-    ? renderSecrets(me.secrets, true, me.pid)
-    : '<span style="color:rgba(0,212,255,.15);font-size:.65rem;font-family:monospace">— 無機密 —</span>';
+  if(chips){
+    if(me.secrets && me.secrets.length){
+      chips.innerHTML = me.secrets.map(c=>{
+        const colorCls = c.color==='dual'?'dual-card':c.color+'-card';
+        const txIcon = {encrypted:'🔒',public:'📢',private:'✉️'}[c.transmit]||'';
+        return `<div class="card ${colorCls} sec" onclick="selectSecretToDestroy('${esc(me.pid)}','${esc(c.iid||'')}')" title="${esc(c.name)}">
+          <div class="card-banner">
+            <span class="card-banner-icon">${txIcon}</span>
+          </div>
+          <div class="card-body">
+            <div class="card-name">${esc(c.name)}</div>
+            ${c.desc?`<hr class="card-divider"><div class="card-desc">${esc(c.desc)}</div>`:''}
+          </div>
+        </div>`;
+      }).join('');
+    } else {
+      chips.innerHTML = '<span style="color:rgba(0,212,255,.15);font-size:.65rem;font-family:monospace">— 無機密 —</span>';
+    }
+  }
 
   // Secrets summary (count by color)
   const sumEl = document.getElementById('self-secrets-summary');
