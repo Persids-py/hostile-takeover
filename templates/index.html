@@ -977,6 +977,10 @@ button{cursor:pointer;font-family:inherit}
 .seat-sstat.red   {background:rgba(200,20,40,.22);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
 .seat-sstat.black {background:rgba(30,30,40,.6);color:#6b7280;border:1px solid rgba(75,85,99,.3)}
 .seat-sstat.hand  {background:rgba(10,20,40,.6);color:var(--text-muted);border:1px solid var(--cy-border)}
+.seat-role {
+  font-size:.62rem;color:#a78bfa;margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
 .seat-chips-row {
   display:flex;gap:3px;flex-wrap:wrap;margin-top:2px;
 }
@@ -2915,20 +2919,27 @@ function renderSeats(d){
       return `<span class="secret-chip ${cls}">${esc(s.name)}</span>`;
     }).join('');
 
+    const roleHtml = p.role
+      ? `<div class="seat-role">🎭 ${esc(p.role)}</div>`
+      : '';
+
     outer.innerHTML = `
       ${topBadge}${lockBadge}
       <div class="seat-card${isActive?' active-turn':''}${p.is_bankrupt?' bankrupt':''}">
         <div class="seat-card-head">
           <div class="seat-avatar" style="background:${ac.bg};color:${ac.text};border-color:${ac.border}">${turnNum}</div>
-          <div class="seat-name">${p.is_bot?'🤖 ':''}${esc(p.name)}</div>
+          <div style="min-width:0;flex:1">
+            <div class="seat-name">${p.is_bot?'🤖 ':''}${esc(p.name)}</div>
+            ${roleHtml}
+          </div>
         </div>
         <div class="seat-stat-row">
           <span class="seat-sstat blue">🔵 ${p.blue}</span>
           <span class="seat-sstat red">🔴 ${p.red}</span>
           <span class="seat-sstat black">⚫ ${p.black}</span>
-          <span class="seat-sstat hand">🃏 ${p.hand_count}</span>
+          <span class="seat-sstat hand">手牌 ${p.hand_count}</span>
         </div>
-        <div class="seat-chips-row">${secretChips||'<span class="no-secret">— 無機密 —</span>'}</div>
+        ${secretChips ? `<div class="seat-chips-row">${secretChips}</div>` : ''}
       </div>`;
     area.appendChild(outer);
   });
