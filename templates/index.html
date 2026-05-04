@@ -981,6 +981,39 @@ button{cursor:pointer;font-family:inherit}
   font-size:.62rem;color:#a78bfa;margin-top:1px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
+.seat-neighbor {
+  display:inline-block;font-size:.52rem;font-family:monospace;
+  letter-spacing:.6px;padding:1px 5px;margin-left:4px;
+  border:1px solid;border-radius:0;vertical-align:middle;
+  flex-shrink:0;
+}
+.seat-neighbor.upstream   { color:#00d4ff;border-color:rgba(0,212,255,.4);background:rgba(0,212,255,.08); }
+.seat-neighbor.downstream { color:#ffb300;border-color:rgba(255,179,0,.4);background:rgba(255,179,0,.08); }
+
+.seat-identity-row {
+  display:flex;align-items:center;gap:5px;
+  margin-bottom:5px;padding:3px 0 3px;
+  border-top:1px solid rgba(255,255,255,.06);
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.seat-identity-label { font-size:.65rem;font-weight:700;flex-shrink:0; }
+.seat-win-bar-wrap { flex:1;height:4px;background:rgba(255,255,255,.08);border-radius:0;overflow:hidden; }
+.seat-win-bar-fill { height:100%;border-radius:0;transition:width .4s; }
+.seat-win-prog { font-size:.6rem;font-family:monospace;flex-shrink:0; }
+
+.seat-bkrpt-row {
+  display:flex;align-items:center;gap:5px;margin-bottom:4px;
+}
+.seat-bkrpt-label { font-size:.58rem;color:#fca5a5;font-family:monospace;flex-shrink:0; }
+.seat-bkrpt-track { flex:1;height:3px;background:rgba(239,68,68,.15);border-radius:0;overflow:hidden; }
+.seat-bkrpt-fill  { height:100%;background:linear-gradient(90deg,#ef4444,#dc2626);border-radius:0;transition:width .4s; }
+
+.seat-task-hint {
+  font-size:.58rem;color:rgba(255,255,255,.3);line-height:1.4;
+  margin-bottom:4px;font-family:monospace;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+
 .seat-chips-row {
   display:flex;gap:3px;flex-wrap:wrap;margin-top:2px;
 }
@@ -2898,30 +2931,69 @@ function renderSeats(d){
   const opponents = d.players.filter(p => p.pid !== myPid);
   const layout = SEAT_LAYOUTS[Math.min(opponents.length, 6)] || [];
 
+  const myOrderIdx = (d.order||[]).indexOf(myPid);
+  const total = (d.order||[]).length;
+  const upstreamPid   = total > 1 ? d.order[(myOrderIdx - 1 + total) % total] : null;
+  const downstreamPid = total > 1 ? d.order[(myOrderIdx + 1) % total]         : null;
+
   opponents.forEach((p, idx) => {
     const posClass = layout[idx] || 'seat-tc';
     const isActive = p.pid === d.current_turn_pid;
     const ac = _avatarColor(p.pid);
     const orderIdx = (d.order||[]).indexOf(p.pid);
-    const turnNum = orderIdx >= 0 ? orderIdx + 1 : '?';
+    const turnNum  = orderIdx >= 0 ? orderIdx + 1 : '?';
 
     const outer = document.createElement('div');
     outer.className = `seat ${posClass}`;
     outer.dataset.pid = p.pid;
 
+    // ── badges ──────────────────────────────────────
     let topBadge = '';
-    if(p.is_bankrupt)      topBadge = `<div class="seat-badge-abs seat-badge-bkrpt">💀 破產</div>`;
-    else if(isActive)      topBadge = `<div class="seat-badge-abs seat-badge-turn">▶ 回合中</div>`;
+    if(p.is_bankrupt) topBadge = `<div class="seat-badge-abs seat-badge-bkrpt">💀 破產</div>`;
+    else if(isActive) topBadge = `<div class="seat-badge-abs seat-badge-turn">▶ 回合中</div>`;
     const lockBadge = p.is_locked ? `<div class="seat-badge-locked">🔒</div>` : '';
 
+    // ── neighbor tag ─────────────────────────────────
+    let neighborTag = '';
+    if(p.pid === upstreamPid)   neighborTag = `<span class="seat-neighbor upstream">上家</span>`;
+    else if(p.pid === downstreamPid) neighborTag = `<span class="seat-neighbor downstream">下家</span>`;
+
+    // ── identity + win progress (when revealed) ──────
+    let identityHtml = '';
+    const wc = p.identity ? WIN_COND[p.identity] : null;
+    if(wc){
+      const prog  = p.identity==='board' ? p.blue : p.identity==='vulture' ? p.red : p.blue+p.red+p.black;
+      const limit = p.identity==='independent' ? 6 : 3;
+      const pct   = Math.min(100, prog/limit*100);
+      identityHtml = `
+        <div class="seat-identity-row">
+          <span class="seat-identity-label" style="color:${wc.color}">${wc.icon} ${wc.label}</span>
+          <div class="seat-win-bar-wrap"><div class="seat-win-bar-fill" style="width:${pct}%;background:${wc.color}99"></div></div>
+          <span class="seat-win-prog" style="color:${wc.color}">${prog}/${limit}</span>
+        </div>`;
+    }
+
+    // ── bankruptcy risk bar (black ≥ 1) ──────────────
+    let bkrptHtml = '';
+    if(p.black > 0 && !p.is_bankrupt){
+      const limit = p.role === '空殼公司' ? 4 : 3;
+      const pct   = Math.min(100, p.black/limit*100);
+      bkrptHtml = `
+        <div class="seat-bkrpt-row">
+          <span class="seat-bkrpt-label">⚫ ${p.black}/${limit}</span>
+          <div class="seat-bkrpt-track"><div class="seat-bkrpt-fill" style="width:${pct}%"></div></div>
+        </div>`;
+    }
+
+    // ── role task hint ────────────────────────────────
+    const taskDesc = p.role && !p.is_bankrupt ? ROLE_TASK_DESC[p.role] : null;
+    const taskHtml = taskDesc ? `<div class="seat-task-hint">任務：${esc(taskDesc)}</div>` : '';
+
+    // ── secrets ──────────────────────────────────────
     const secretChips = (p.secrets||[]).map(s=>{
       const cls = s.color==='dual'?'dual':s.color;
       return `<span class="secret-chip ${cls}">${esc(s.name)}</span>`;
     }).join('');
-
-    const roleHtml = p.role
-      ? `<div class="seat-role">🎭 ${esc(p.role)}</div>`
-      : '';
 
     outer.innerHTML = `
       ${topBadge}${lockBadge}
@@ -2929,16 +3001,22 @@ function renderSeats(d){
         <div class="seat-card-head">
           <div class="seat-avatar" style="background:${ac.bg};color:${ac.text};border-color:${ac.border}">${turnNum}</div>
           <div style="min-width:0;flex:1">
-            <div class="seat-name">${p.is_bot?'🤖 ':''}${esc(p.name)}</div>
-            ${roleHtml}
+            <div class="seat-name" style="display:flex;align-items:center;gap:0">
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.is_bot?'🤖 ':''}${esc(p.name)}</span>
+              ${neighborTag}
+            </div>
+            ${p.role ? `<div class="seat-role">🎭 ${esc(p.role)}</div>` : ''}
           </div>
         </div>
+        ${identityHtml}
         <div class="seat-stat-row">
           <span class="seat-sstat blue">🔵 ${p.blue}</span>
           <span class="seat-sstat red">🔴 ${p.red}</span>
           <span class="seat-sstat black">⚫ ${p.black}</span>
           <span class="seat-sstat hand">手牌 ${p.hand_count}</span>
         </div>
+        ${bkrptHtml}
+        ${taskHtml}
         ${secretChips ? `<div class="seat-chips-row">${secretChips}</div>` : ''}
       </div>`;
     area.appendChild(outer);
