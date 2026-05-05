@@ -904,12 +904,14 @@ button{cursor:pointer;font-family:inherit}
 .seat {
   position:absolute;pointer-events:all;
 }
-.seat-tl { top:9%;  left:17%; }
-.seat-tc { top:2%;  left:50%; transform:translateX(-50%); }
-.seat-tr { top:9%;  right:17%; }
-.seat-l  { top:44%; left:4%;  transform:translateY(-50%); }
-.seat-r  { top:44%; right:4%; transform:translateY(-50%); }
-.seat-bl { top:64%; left:16%; }
+/* 左=下家  上=中間  右=上家 */
+.seat-l1  { top:20%; left:8%; }
+.seat-l2  { top:50%; left:8%; }
+.seat-tc  { top:3%;  left:50%; transform:translateX(-50%); }
+.seat-tc1 { top:3%;  left:27%; }
+.seat-tc2 { top:3%;  right:27%; }
+.seat-r1  { top:20%; right:8%; }
+.seat-r2  { top:50%; right:8%; }
 
 .seat-card {
   background: rgba(3,10,22,.92);
@@ -2918,21 +2920,28 @@ function _avatarColor(pid){ return AVATAR_COLORS[Math.abs(_hashCode(pid||'')) % 
 // Seat position class layout by opponent count
 const SEAT_LAYOUTS = {
   1:['seat-tc'],
-  2:['seat-tl','seat-tr'],
-  3:['seat-tl','seat-tc','seat-tr'],
-  4:['seat-tl','seat-tc','seat-tr','seat-r'],
-  5:['seat-tl','seat-tc','seat-tr','seat-l','seat-r'],
-  6:['seat-tl','seat-tc','seat-tr','seat-l','seat-r','seat-bl'],
+  2:['seat-l1','seat-r1'],
+  3:['seat-l1','seat-tc','seat-r1'],
+  4:['seat-l1','seat-tc1','seat-tc2','seat-r1'],
+  5:['seat-l1','seat-l2','seat-tc','seat-r2','seat-r1'],
+  6:['seat-l1','seat-l2','seat-tc1','seat-tc2','seat-r2','seat-r1'],
 };
 
 function renderSeats(d){
   const area = document.getElementById('seats-area');
   area.innerHTML = '';
-  const opponents = d.players.filter(p => p.pid !== myPid);
-  const layout = SEAT_LAYOUTS[Math.min(opponents.length, 6)] || [];
 
+  // Sort opponents starting from my immediate 下家, going round to 上家
   const myOrderIdx = (d.order||[]).indexOf(myPid);
   const total = (d.order||[]).length;
+  const opponents = [];
+  for(let i = 1; i < total; i++){
+    const pid = d.order[(myOrderIdx + i) % total];
+    const p = d.players.find(pl => pl.pid === pid);
+    if(p) opponents.push(p);
+  }
+  const layout = SEAT_LAYOUTS[Math.min(opponents.length, 6)] || [];
+
   const upstreamPid   = total > 1 ? d.order[(myOrderIdx - 1 + total) % total] : null;
   const downstreamPid = total > 1 ? d.order[(myOrderIdx + 1) % total]         : null;
 
