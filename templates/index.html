@@ -2920,11 +2920,11 @@ function _avatarColor(pid){ return AVATAR_COLORS[Math.abs(_hashCode(pid||'')) % 
 // Seat position class layout by opponent count
 const SEAT_LAYOUTS = {
   1:['seat-tc'],
-  2:['seat-l1','seat-r1'],
-  3:['seat-l1','seat-tc','seat-r1'],
-  4:['seat-l1','seat-tc1','seat-tc2','seat-r1'],
-  5:['seat-l1','seat-l2','seat-tc','seat-r2','seat-r1'],
-  6:['seat-l1','seat-l2','seat-tc1','seat-tc2','seat-r2','seat-r1'],
+  2:['seat-l2','seat-r2'],
+  3:['seat-l2','seat-tc','seat-r2'],
+  4:['seat-l2','seat-tc1','seat-tc2','seat-r2'],
+  5:['seat-l2','seat-l1','seat-tc','seat-r1','seat-r2'],
+  6:['seat-l2','seat-l1','seat-tc1','seat-tc2','seat-r1','seat-r2'],
 };
 
 function renderSeats(d){
