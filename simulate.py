@@ -1,40 +1,42 @@
-# simulate.py — 全 Bot 模擬測試（不需要 Flask / SocketIO）
+"""
+simulate.py — 7 個電腦玩家自動跑完一場遊戲，輸出觀察報告。
+用法：
+    python simulate.py          # 跑 1 場（詳細輸出）
+    python simulate.py 10       # 跑 10 場並統計
+"""
 
-import random
-import sys
+import sys, random, collections
 import game as G
 import bot as BOT
 
-MAX_ACTIONS = 2000   # 超過視為死循環
+# ── 同步版 bot_tick（直接複製自 app.py 的 _bot_tick 邏輯） ─────────────────
 
-def bot_step(g) -> bool:
-    """模擬 app.py 的 _bot_tick，回傳 True 表示有動作。"""
+def _bot_tick(g: dict) -> bool:
     phase = g["phase"]
 
-    # 0a. 抽身份牌階段
     if phase == G.PHASE_DRAFT_IDENTITY:
         for pid in list(g["draft_pending"]):
-            available = [i for i, v in enumerate(g["draft_claimed"]) if v is None]
-            if available:
-                G.action_draft_identity(g, pid, random.choice(available))
-                return True
+            if g["players"].get(pid, {}).get("is_bot"):
+                available = [i for i, v in enumerate(g["draft_claimed"]) if v is None]
+                if available:
+                    G.action_draft_identity(g, pid, random.choice(available))
+                    return True
         return False
 
-    # 0b. 選角色牌階段
     if phase == G.PHASE_DRAFT_ROLE:
         for pid in list(g.get("draft_role_pending", set())):
-            choices = g["players"][pid].get("role_choices", [])
-            if choices:
-                G.action_pick_role(g, pid, random.choice(choices))
-                return True
+            if g["players"].get(pid, {}).get("is_bot"):
+                choices = g["players"][pid].get("role_choices", [])
+                if choices:
+                    G.action_pick_role(g, pid, random.choice(choices))
+                    return True
         return False
 
-    # 1. 響應視窗
     win = G._current_window(g)
     if win:
         for pid in list(win["waiting_for"]):
             p = g["players"].get(pid)
-            if not p:
+            if not p or not p.get("is_bot"):
                 continue
             if win["wtype"] == "pre_receive" and win["target"] == pid:
                 accept = BOT.should_accept(g, pid)
@@ -45,33 +47,41 @@ def bot_step(g) -> bool:
                     if not ok:
                         G.action_accept(g, pid)
             else:
+                func_iid, func_extra = BOT.choose_function_to_play(g, pid, win)
+                if func_iid:
+                    ok, _, need_more = G.action_play_function(g, pid, func_iid, func_extra)
+                    if ok and not need_more:
+                        return True
                 G.pass_response(g, pid)
             return True
         return False
 
-    # 2. 選牌傳出
     if phase == G.PHASE_CHOOSE_CARD:
         cp = G.current_pid(g)
-        if cp:
+        if cp and g["players"][cp].get("is_bot"):
+            func_iid, func_extra = BOT.choose_function_to_play(g, cp, None)
+            if func_iid:
+                ok, _, need_more = G.action_play_function(g, cp, func_iid, func_extra)
+                if ok and not need_more:
+                    return True
             card_iid, target = BOT.choose_transmit(g, cp)
             if card_iid:
-                ok, msg = G.action_transmit(g, cp, card_iid, target)
+                ok, _ = G.action_transmit(g, cp, card_iid, target)
                 if not ok:
                     G.action_no_cards_skip(g, cp)
             else:
-                ok, msg = G.action_no_cards_skip(g, cp)
+                ok, _ = G.action_no_cards_skip(g, cp)
                 if not ok:
                     return False
             return True
         return False
 
-    # 3. 接收決策（PHASE_IN_TRANSIT 沒有 win 時不應出現，但防呆）
     if phase == G.PHASE_IN_TRANSIT:
         t = g.get("transit")
         if t:
             pid = t["current_target"]
             p = g["players"].get(pid)
-            if p:
+            if p and p.get("is_bot"):
                 accept = BOT.should_accept(g, pid)
                 if accept:
                     G.action_accept(g, pid)
@@ -82,88 +92,183 @@ def bot_step(g) -> bool:
                 return True
         return False
 
-    # 4. 棄牌
     if phase == G.PHASE_DISCARD:
         cp = G.current_pid(g)
-        if cp:
-            iids = BOT.choose_discard(g, cp)
-            G.action_discard(g, cp, iids)
+        if cp and g["players"][cp].get("is_bot"):
+            G.action_discard(g, cp, BOT.choose_discard(g, cp))
             return True
         return False
 
     return False
 
 
-def run_game(game_no: int):
-    print(f"\n{'='*60}")
-    print(f"  第 {game_no} 場模擬開始")
-    print(f"{'='*60}")
+# ── 單場遊戲 ────────────────────────────────────────────────────────────────
 
+def run_one(game_idx: int, verbose: bool) -> dict:
     g = G.new_game()
+    pids = [f"p{i}" for i in range(7)]
+    names_used = []
 
-    # 加入4個 Bot
-    bots = ["bot_A", "bot_B", "bot_C", "bot_D"]
-    names = ["Bot甲", "Bot乙", "Bot丙", "Bot丁"]
-    for pid, name in zip(bots, names):
+    for pid in pids:
+        name = BOT.alloc_bot_name()
+        names_used.append(name)
         G.add_player(g, pid, name)
         g["players"][pid]["is_bot"] = True
 
-    ok, msg = G.start_game(g)
-    assert ok, f"start_game 失敗: {msg}"
+    G.start_game(g)
 
-    actions = 0
-    last_phase = None
-    stuck_count = 0
+    MAX_STEPS = 20000
+    for step in range(MAX_STEPS):
+        if g["phase"] == G.PHASE_GAME_OVER:
+            break
+        _bot_tick(g)
 
-    while g["phase"] != G.PHASE_GAME_OVER:
-        if actions >= MAX_ACTIONS:
-            print(f"\n[!] 超過 {MAX_ACTIONS} 步，可能死循環！最後 phase={g['phase']}")
-            # 印出最後10條 log
-            for line in g["log"][-15:]:
-                print(f"    {line}")
-            win = G._current_window(g)
-            if win:
-                print(f"    響應視窗: wtype={win['wtype']}, waiting_for={win['waiting_for']}, cancelled={win['cancelled']}")
-            t = g.get("transit")
-            if t:
-                print(f"    傳遞中: mode={t['mode']}, current={t['current_target']}, going_back={t['going_back']}, visited={t['visited']}")
-            sys.exit(1)
+    if verbose:
+        _print_game(g, game_idx, step)
 
-        acted = bot_step(g)
-        actions += 1
+    for n in names_used:
+        BOT.free_bot_name(n)
 
-        if g["phase"] == last_phase:
-            stuck_count += 1
-            if stuck_count >= 50:
-                print(f"\n[!] phase={g['phase']} 連續50步無進展，卡住了！")
-                for line in g["log"][-15:]:
-                    print(f"    {line}")
-                sys.exit(1)
-        else:
-            stuck_count = 0
-            last_phase = g["phase"]
+    return _collect_stats(g, pids, step)
 
-        if not acted and g["phase"] != G.PHASE_GAME_OVER:
-            # 沒有 bot 行動但遊戲未結束 → 可能卡在人類玩家動作，這裡全是 bot 不應發生
-            stuck_count += 1
-            if stuck_count >= 20:
-                print(f"\n[!] bot_step 連續返回 False，phase={g['phase']}，卡住")
-                for line in g["log"][-15:]:
-                    print(f"    {line}")
-                sys.exit(1)
 
-    print(f"\n  遊戲結束！共 {actions} 步")
-    print(f"  結果：{g['win_reason']}")
-    print(f"  勝利者：{[g['players'][p]['name'] for p in g['winner_pids']]}")
-    print(f"\n  最後20條 log：")
-    for line in g["log"][-20:]:
-        print(f"    {line}")
+def _dump_stuck(g):
+    win = G._current_window(g)
+    if win:
+        print(f"  響應視窗: wtype={win['wtype']}, waiting_for={win['waiting_for']}")
+    t = g.get("transit")
+    if t:
+        print(f"  傳遞中: mode={t['mode']}, target={t['current_target']}, going_back={t['going_back']}")
+    for msg in g["log"][-10:]:
+        print(f"  {msg}")
 
+
+# ── 輸出 ─────────────────────────────────────────────────────────────────────
+
+def _print_game(g, game_idx, steps):
+    sep = "=" * 66
+    print(f"\n{sep}")
+    print(f"  第 {game_idx+1} 場  共 {steps} 步")
+    print(sep)
+
+    print("\n【玩家最終狀態】")
+    print(f"  {'名稱':<14} {'身份':<10} {'角色':<12} 藍  紅  黑  密  破產")
+    print("  " + "-" * 60)
+    for p in g["players"].values():
+        bk = "💀" if p["is_bankrupt"] else "  "
+        print(f"  {p['name']:<14} {p['identity']:<10} {p['role']:<12}"
+              f" {G.count_blue(p):>2}  {G.count_red(p):>2}  {G.count_black(p):>2}"
+              f"  {len(p['secrets']):>2}  {bk}")
+
+    print(f"\n【結局】{g.get('win_reason','（未記錄）')}")
+    winners = [g["players"][p]["name"] for p in g.get("winner_pids", [])]
+    if winners:
+        print(f"  勝利者：{', '.join(winners)}")
+
+    # 功能牌使用統計
+    func_counts: dict[str, int] = collections.defaultdict(int)
+    FUNC_NAMES = ["銷毀帳冊","債務轉移","偷天換日","惡意截胡","惡意干擾",
+                  "惡意帶風向","內線交易","資源挹注","吹哨者舉報","盡職調查",
+                  "惡意鎖定","駭客入侵","公開財報","核心機密","法務攔截"]
+    for msg in g["log"]:
+        if msg.startswith("⚡"):
+            for fname in FUNC_NAMES:
+                if fname in msg:
+                    func_counts[fname] += 1
+                    break
+
+    if func_counts:
+        print("\n【功能牌使用次數】")
+        for fname, cnt in sorted(func_counts.items(), key=lambda x: -x[1]):
+            bar = "▪" * cnt
+            print(f"  {fname:<10} {cnt:>3}  {bar}")
+
+    print("\n【遊戲日誌（最後 25 條）】")
+    for msg in g["log"][-25:]:
+        print(f"  {msg}")
+
+
+def _collect_stats(g, pids, steps) -> dict:
+    bankrupt = sum(1 for p in g["players"].values() if p["is_bankrupt"])
+    # 直接從 game state 讀取勝利身份（不靠 log，log 有長度上限會被截斷）
+    winner_identity = None
+    for wpid in g.get("winner_pids", []):
+        wp = g["players"].get(wpid)
+        if wp:
+            winner_identity = wp["identity"]
+            break
+
+    func_counts: dict[str, int] = collections.defaultdict(int)
+    FUNC_NAMES = ["銷毀帳冊","債務轉移","偷天換日","惡意截胡","惡意干擾",
+                  "惡意帶風向","內線交易","資源挹注","吹哨者舉報","盡職調查",
+                  "惡意鎖定","駭客入侵","公開財報","核心機密","法務攔截"]
+    for msg in g["log"]:
+        if msg.startswith("⚡"):
+            for fname in FUNC_NAMES:
+                if fname in msg:
+                    func_counts[fname] += 1
+                    break
+
+    return {
+        "steps": steps,
+        "winner": winner_identity,
+        "bankrupt": bankrupt,
+        "func_counts": dict(func_counts),
+        "finished": g["phase"] == G.PHASE_GAME_OVER,
+    }
+
+
+# ── 多場統計 ────────────────────────────────────────────────────────────────
+
+def _print_aggregate(results: list[dict]):
+    n = len(results)
+    finished = sum(1 for r in results if r["finished"])
+    print(f"\n{'='*66}")
+    print(f"  {n} 場統計摘要  （正常結束 {finished}/{n} 場）")
+    print(f"{'='*66}")
+
+    win_counts: dict = collections.Counter(
+        r["winner"] for r in results if r["winner"]
+    )
+    avg_steps = sum(r["steps"] for r in results) / n
+    avg_bk = sum(r["bankrupt"] for r in results) / n
+
+    print(f"\n  平均步數：{avg_steps:.0f}")
+    print(f"  平均破產人數：{avg_bk:.1f}")
+
+    print("\n  勝利身份分布：")
+    total_wins = sum(win_counts.values())
+    for identity, cnt in win_counts.most_common():
+        pct = cnt / n * 100
+        bar = "█" * cnt
+        print(f"    {identity:<12} {cnt:>3} 場  {pct:>5.1f}%  {bar}")
+    no_win = n - total_wins
+    if no_win:
+        print(f"    （無勝利者）    {no_win:>3} 場  {no_win/n*100:>5.1f}%")
+
+    # 功能牌總使用次數
+    total_func: dict[str, int] = collections.defaultdict(int)
+    for r in results:
+        for k, v in r["func_counts"].items():
+            total_func[k] += v
+    if total_func:
+        print("\n  功能牌平均每場使用：")
+        for fname, cnt in sorted(total_func.items(), key=lambda x: -x[1]):
+            print(f"    {fname:<10} {cnt/n:>5.1f} 次/場")
+
+
+# ── 入口 ────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    random.seed()  # 隨機種子，每次不同
-    for i in range(1, 4):
-        run_game(i)
-    print(f"\n{'='*60}")
-    print("  全部3場模擬完成，無異常！")
-    print(f"{'='*60}\n")
+    n_games = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+    verbose_each = n_games <= 3
+
+    results = []
+    for i in range(n_games):
+        if not verbose_each:
+            print(f"跑第 {i+1}/{n_games} 場...", end="\r", flush=True)
+        results.append(run_one(i, verbose=verbose_each))
+
+    if n_games > 1:
+        _print_aggregate(results)
+    print()

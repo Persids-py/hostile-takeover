@@ -50,7 +50,9 @@ def _threat_score(game: dict, pid: str) -> float:
         return G.count_red(p) / 3
     if inf == G.INDEPENDENT:
         return len(p.get("secrets", [])) / 6
-    return 0.1
+    # 身份未知但已有 2 張機密：視為潛在威脅
+    total = len(p.get("secrets", []))
+    return min(0.4, total * 0.15)
 
 # ── 公開資訊推理 ──────────────────────────────────────────────────────────────
 
@@ -63,12 +65,12 @@ def _infer_identity(game: dict, pid: str):
     blue  = G.count_blue(p)
     red   = G.count_red(p)
     total = len(p["secrets"])
-    if total >= 4:           # 大量囤牌 → 獨立投資人傾向
-        return G.INDEPENDENT
     if blue >= 2 and blue > red:
         return G.BOARD
     if red >= 2 and red > blue:
         return G.VULTURE
+    if total >= 3:           # 3 張以上且無明確顏色傾向 → 獨立投資人
+        return G.INDEPENDENT
     return None              # 資訊不足，無法判斷
 
 # ── 決策函式 ──────────────────────────────────────────────────────────────────
@@ -295,15 +297,16 @@ def choose_function_to_play(game: dict, pid: str, win) -> tuple:
             others = [p2 for p2 in G.active_pids(game) if p2 != pid and p2 != tgt_pid]
             new_tgt = None
             if hostile(tgt_pid):
-                # 敵方即將接收 → 改傳給非敵方
+                # 敵方即將接收 → 必定改傳給威脅最低的玩家
                 non_enemies = [p2 for p2 in others if not hostile(p2)]
-                if non_enemies and random.random() < 0.5:
-                    new_tgt = random.choice(non_enemies)
+                pool = non_enemies if non_enemies else others
+                if pool and random.random() < 0.70:
+                    new_tgt = min(pool, key=lambda p2: _threat_score(game, p2))
             else:
-                # 友方即將接收 → 偶爾改傳給敵方（攪局）
+                # 友方即將接收 → 有時改傳給最危險的敵人（加速他們接到壞牌）
                 enemies = [p2 for p2 in others if hostile(p2)]
-                if enemies and random.random() < 0.20:
-                    new_tgt = random.choice(enemies)
+                if enemies and random.random() < 0.30:
+                    new_tgt = max(enemies, key=lambda p2: _threat_score(game, p2))
             if new_tgt:
                 return c["iid"], {"new_target": new_tgt}
 
@@ -328,32 +331,35 @@ def choose_function_to_play(game: dict, pid: str, win) -> tuple:
             if (len(p["hand"]) <= 3 or G.count_black(p) >= 1) and random.random() < 0.6:
                 return c["iid"], {}
 
-        # P9 吹哨者舉報 — 對危險玩家（快勝）或敵人強制棄牌
+        # P9 吹哨者舉報 — 優先針對威脅最高的敵人強制棄最有利的牌
         c = f("吹哨者舉報")
         if c:
             active = G.active_pids(game)
-            dangerous = [p2 for p2 in active if p2 != pid and (
+            # 按威脅程度排序，先打最危險的
+            enemies = sorted(
+                [p2 for p2 in active if p2 != pid and hostile(p2)],
+                key=lambda p2: _threat_score(game, p2), reverse=True
+            )
+            dangerous_non_enemy = [p2 for p2 in active if p2 != pid and not hostile(p2) and (
                 G.count_blue(game["players"][p2]) >= 2 or
                 G.count_red(game["players"][p2])  >= 2
             )]
-            enemies = [p2 for p2 in active if p2 != pid and hostile(p2)]
-            targets = dangerous if dangerous else enemies
-            if targets and random.random() < 0.55:
-                target = random.choice(targets)
+            targets = enemies if enemies else dangerous_non_enemy
+            if targets and random.random() < 0.60:
+                target = targets[0]  # 最危險的
                 tp = game["players"][target]
                 if tp["hand"]:
-                    # 讓對方棄掉對他們最有利的牌
                     opp_id = G.VULTURE if identity == G.BOARD else G.BOARD
                     best = min(tp["hand"],
                                key=lambda x: _color_unwant(opp_id, x["color"]))
                     return c["iid"], {"target_pid": target, "discard_iid": best["iid"]}
 
-        # P10 盡職調查 — 調查身份未知的玩家
+        # P10 盡職調查 — 調查身份未知的玩家（降低頻率，避免過度資訊蒐集）
         c = f("盡職調查")
         if c:
             unknowns = [p2 for p2 in G.active_pids(game)
                         if p2 != pid and _infer_identity(game, p2) is None]
-            if unknowns and random.random() < 0.5:
+            if unknowns and random.random() < 0.25:
                 return c["iid"], {"target_pid": random.choice(unknowns)}
 
         # P11 惡意鎖定 — 鎖定敵人後傳黑牌給他
@@ -365,12 +371,12 @@ def choose_function_to_play(game: dict, pid: str, win) -> tuple:
                 if enemies and random.random() < 0.45:
                     return c["iid"], {"target_pid": random.choice(enemies)}
 
-        # P12 駭客入侵 — 蒐集情報（查看手牌）
+        # P12 駭客入侵 — 蒐集情報（降低頻率）
         c = f("駭客入侵")
         if c:
             unknowns = [p2 for p2 in G.active_pids(game)
                         if p2 != pid and _infer_identity(game, p2) is None]
-            if unknowns and random.random() < 0.35:
+            if unknowns and random.random() < 0.18:
                 return c["iid"], {"target_pid": random.choice(unknowns)}
 
         # P13 公開財報 — 把最不想要的牌換給對手
