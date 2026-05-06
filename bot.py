@@ -50,7 +50,10 @@ def _infer_identity(game: dict, pid: str):
 # ── 決策函式 ──────────────────────────────────────────────────────────────────
 
 def should_accept(game: dict, pid: str) -> bool:
-    """電腦決定是否接收當前傳至自己的機密（不透視牌的顏色）。"""
+    """電腦決定是否接收當前傳至自己的機密。
+    公開傳遞：接收方看得到牌，用精確邏輯。
+    加密/私信：看不到牌，用推斷邏輯。
+    """
     t = game.get("transit")
     if not t or t["current_target"] != pid:
         return False
@@ -58,12 +61,34 @@ def should_accept(game: dict, pid: str) -> bool:
     p = game["players"][pid]
     identity = p["identity"]
     black = G.count_black(p)
+    mode = t.get("mode", G.PUBLIC)
 
-    # 已有2張黑牌，破產風險高，不管什麼都很謹慎
+    # ── 公開傳遞：看得到牌 ────────────────────────────────────────────
+    if mode == G.PUBLIC:
+        color = t["card"]["color"]
+        if color == G.BLACK and black >= 2:
+            return False
+        if identity == G.BOARD and color in (G.BLUE, G.DUAL):
+            return True
+        if identity == G.VULTURE and color in (G.RED, G.DUAL):
+            return True
+        if identity == G.INDEPENDENT:
+            if color == G.BLACK:
+                return black < 2 and random.random() < 0.25
+            return True
+        if color == G.BLACK:
+            return random.random() < 0.15
+        if identity == G.BOARD and color == G.RED:
+            return random.random() < 0.30
+        if identity == G.VULTURE and color == G.BLUE:
+            return random.random() < 0.30
+        if color == G.DUAL:
+            return random.random() < 0.60
+        return random.random() < 0.25
+
+    # ── 加密雲端 / 私人信件：看不到牌，用傳送者身份推斷 ────────────────
     if black >= 2:
         return random.random() < 0.08
-
-    # 根據傳送者推斷風險
     sender_pid = t.get("sender")
     is_hostile_sender = False
     if sender_pid and sender_pid != pid:
@@ -73,14 +98,10 @@ def should_accept(game: dict, pid: str) -> bool:
                 is_hostile_sender = True
             elif identity == G.VULTURE and inf == G.BOARD:
                 is_hostile_sender = True
-
     if identity == G.INDEPENDENT:
-        # 獨立投資人需要6張，積極收牌
         if is_hostile_sender and black >= 1:
             return random.random() < 0.35
         return random.random() < 0.85
-
-    # 董事會 / 禿鷹：對敵方傳來的牌保持警戒
     if is_hostile_sender:
         return random.random() < 0.28
     return random.random() < 0.62
@@ -176,33 +197,41 @@ def choose_function_to_play(game: dict, pid: str, win) -> tuple:
             if own_black:
                 return c["iid"], {"target_pid": pid, "target_iid": own_black["iid"]}
 
-    # ── P2 債務轉移 — 敵方傳牌過來時，有機率轉給他人 ──────────────────
+    # ── P2 債務轉移 — 黑牌（公開）或敵方傳來（加密/私信）時轉出 ────────
     if t and t["current_target"] == pid and not t.get("going_back"):
-        sender_pid = t.get("sender")
-        inf_sender = _infer_identity(game, sender_pid) if sender_pid else None
-        hostile_send = (
-            (identity == G.BOARD   and inf_sender == G.VULTURE) or
-            (identity == G.VULTURE and inf_sender == G.BOARD)
-        )
         c = f("債務轉移")
-        if c and hostile_send and random.random() < 0.45:
-            others = [p2 for p2 in G.active_pids(game) if p2 != pid]
-            enemies = [p2 for p2 in others if hostile(p2)]
-            target = random.choice(enemies if enemies else others) if others else None
-            if target:
-                return c["iid"], {"target_pid": target}
+        if c:
+            mode = t.get("mode", G.PUBLIC)
+            trigger = False
+            if mode == G.PUBLIC:
+                trigger = t["card"]["color"] == G.BLACK
+            else:
+                sender_pid = t.get("sender")
+                inf_sender = _infer_identity(game, sender_pid) if sender_pid else None
+                trigger = (
+                    (identity == G.BOARD   and inf_sender == G.VULTURE) or
+                    (identity == G.VULTURE and inf_sender == G.BOARD)
+                ) and random.random() < 0.45
+            if trigger:
+                others = [p2 for p2 in G.active_pids(game) if p2 != pid]
+                enemies = [p2 for p2 in others if hostile(p2)]
+                target = random.choice(enemies if enemies else others) if others else None
+                if target:
+                    return c["iid"], {"target_pid": target}
 
-    # ── P3 偷天換日 — 私信退回時，有機率偷換為對自己最差的牌 ──────────
+    # ── P3 偷天換日 — 私信退回且是黑牌，換一張較差的牌重傳 ─────────────
+    # 傳出者知道自己送出什麼牌，退回時可以看到顏色
     if t and t["mode"] == G.PRIVATE and t.get("going_back") and t["current_target"] == pid:
-        c = f("偷天換日")
-        if c and random.random() < 0.5:
-            candidates = sorted(
-                [x for x in p["hand"] if x["iid"] != c["iid"]],
-                key=lambda x: _color_unwant(identity, x["color"]),
-                reverse=True,
-            )
-            if candidates:
-                return c["iid"], {"swap_iid": candidates[0]["iid"]}
+        if t["card"]["color"] == G.BLACK:
+            c = f("偷天換日")
+            if c:
+                candidates = sorted(
+                    [x for x in p["hand"] if x["iid"] != c["iid"]],
+                    key=lambda x: _color_unwant(identity, x["color"]),
+                    reverse=True,
+                )
+                if candidates:
+                    return c["iid"], {"swap_iid": candidates[0]["iid"]}
 
     # ── P4 惡意截胡 — 接收者進度快、且是同陣營或自己需要更多牌 ─────────
     if win and win["wtype"] == "pre_receive" and win["target"] != pid:
