@@ -1138,14 +1138,8 @@ button{cursor:pointer;font-family:inherit}
 #table-actions {display:flex;gap:7px;flex-wrap:wrap;justify-content:center}
 
 @keyframes tableGlow {
-  0%,100%{
-    border-color: var(--cy-cyan2);
-    box-shadow: 0 0 0 1px rgba(0,212,255,.08),0 0 40px rgba(0,212,255,.12),0 0 90px rgba(0,212,255,.06),inset 0 0 60px rgba(0,0,0,.6);
-  }
-  50%{
-    border-color: var(--cy-amber);
-    box-shadow: 0 0 0 1px rgba(255,179,0,.15),0 0 50px rgba(255,179,0,.25),0 0 100px rgba(255,179,0,.12),inset 0 0 60px rgba(0,0,0,.6);
-  }
+  0%,100%{ border-color: var(--cy-cyan2); box-shadow: 0 0 20px rgba(0,212,255,.15),inset 0 0 40px rgba(0,0,0,.5); }
+  50%{     border-color: var(--cy-amber);  box-shadow: 0 0 24px rgba(255,179,0,.22),inset 0 0 40px rgba(0,0,0,.5); }
 }
 #table-area.my-decision {
   animation: tableGlow 1.8s ease-in-out infinite;
@@ -2938,7 +2932,19 @@ const SEAT_LAYOUTS = {
   6:['seat-l2','seat-l1','seat-tc1','seat-tc2','seat-r1','seat-r2'],
 };
 
+let _seatsFP = '';
 function renderSeats(d){
+  // Build a fingerprint of the fields that affect seat rendering
+  const fp = JSON.stringify((d.players||[])
+    .filter(p=>p.pid!==myPid)
+    .map(p=>({pid:p.pid,name:p.name,role:p.role,identity:p.identity,
+               blue:p.blue,red:p.red,black:p.black,hand_count:p.hand_count,
+               is_bankrupt:p.is_bankrupt,is_locked:p.is_locked,
+               secrets:(p.secrets||[]).map(s=>s.color+s.name)}))
+  ) + d.current_turn_pid + (d.order||[]).join(',');
+  if(fp === _seatsFP) return;
+  _seatsFP = fp;
+
   const area = document.getElementById('seats-area');
   area.innerHTML = '';
 
@@ -3283,13 +3289,20 @@ function renderTableTransit(d){
   }
 }
 
+let _handFP = '';
 function renderHand(d){
   const me=d.players.find(p=>p.pid===myPid);
   if(!me||!me.hand) return;
+  const fp = JSON.stringify(me.hand.map(c=>c.iid+c.name)) +
+    me.role + (me.role_used?1:0) + (me.role_task_done?1:0) +
+    JSON.stringify(me.role_task_progress||{}) + d.current_turn_pid +
+    (d.phase||'') + JSON.stringify(d.pending_action||null);
   const cards=document.getElementById('hand-cards');
   const countEl=document.getElementById('hand-count');
   const handLimit = me.role==='王牌律師' ? 8 : 6;
   countEl.textContent=`（${me.hand.length}/${handLimit}）`;
+  if(fp === _handFP) return;
+  _handFP = fp;
   cards.innerHTML='';
 
   // Role badge + skill button
@@ -3532,10 +3545,18 @@ function renderResponseWindow(d){
   _clearPassTimer();
 }
 
+let _logRenderedCount = 0;
 function renderLog(d){
   const el=document.getElementById('log-area');
-  el.innerHTML='';
-  d.log.forEach(msg=>{
+  const msgs=d.log||[];
+  // Full rebuild only when log shrinks (new game) or first render
+  if(msgs.length < _logRenderedCount){
+    el.innerHTML='';
+    _logRenderedCount=0;
+  }
+  // Append only new entries
+  for(let i=_logRenderedCount;i<msgs.length;i++){
+    const msg=msgs[i];
     const div=document.createElement('div');
     let cls='log-entry';
     if(msg.startsWith('🏆')) cls+=' log-win';
@@ -3546,7 +3567,8 @@ function renderLog(d){
     div.className=cls;
     div.textContent=msg;
     el.appendChild(div);
-  });
+  }
+  _logRenderedCount=msgs.length;
   el.scrollTop=el.scrollHeight;
 }
 
