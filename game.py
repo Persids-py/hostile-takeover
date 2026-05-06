@@ -952,9 +952,16 @@ def action_no_cards_skip(game, pid):
     if current_pid(game) != pid:
         return False, "不是你的回合"
     p = game["players"][pid]
+    forced = p.get("forced_transmit_color")
     if p["hand"]:
-        return False, "你還有手牌，請選一張傳出"
-    _log(game, f"{p['name']} 手牌為空，跳過傳牌")
+        # 若有 forced_transmit_color 約束但手牌中已無符合顏色，允許跳過並解除約束
+        if forced and not any(c["color"] == forced for c in p["hand"]):
+            p["forced_transmit_color"] = None
+            _log(game, f"{p['name']} 無法滿足內線交易要求，跳過傳牌")
+        else:
+            return False, "你還有手牌，請選一張傳出"
+    else:
+        _log(game, f"{p['name']} 手牌為空，跳過傳牌")
     _enter_discard_phase(game)
     return True, "ok"
 

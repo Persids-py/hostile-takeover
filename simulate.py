@@ -124,8 +124,13 @@ def run_one(game_idx: int, verbose: bool) -> dict:
             break
         _bot_tick(g)
 
-    if verbose:
+    stuck = g["phase"] != G.PHASE_GAME_OVER
+    if verbose or stuck:
         _print_game(g, game_idx, step)
+    if stuck:
+        print(f"\n  *** 卡住診斷 ***")
+        print(f"  phase={g['phase']}")
+        _dump_stuck(g)
 
     for n in names_used:
         BOT.free_bot_name(n)
