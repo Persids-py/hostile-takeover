@@ -28,6 +28,30 @@ def _color_unwant(identity: str, color: str) -> int:
     """回傳指定身份對該顏色的不受歡迎基礎分數。"""
     return _UNWANT.get(identity, {}).get(color, 10)
 
+def _win_progress(game: dict, pid: str) -> tuple[int, int]:
+    """回傳 (已累積數, 勝利所需數)，用來判斷機器人距勝利有多遠。"""
+    p = game["players"][pid]
+    identity = p["identity"]
+    if identity == G.BOARD:
+        return G.count_blue(p), 3
+    if identity == G.VULTURE:
+        return G.count_red(p), 3
+    if identity == G.INDEPENDENT:
+        return len(p.get("secrets", [])), 6
+    return 0, 3
+
+def _threat_score(game: dict, pid: str) -> float:
+    """評估某玩家的威脅程度（越高越危險）。"""
+    p = game["players"][pid]
+    inf = _infer_identity(game, pid)
+    if inf == G.BOARD:
+        return G.count_blue(p) / 3
+    if inf == G.VULTURE:
+        return G.count_red(p) / 3
+    if inf == G.INDEPENDENT:
+        return len(p.get("secrets", [])) / 6
+    return 0.1
+
 # ── 公開資訊推理 ──────────────────────────────────────────────────────────────
 
 def _infer_identity(game: dict, pid: str):
@@ -125,7 +149,6 @@ def choose_transmit(game: dict, pid: str):
     if card["transmit"] == G.PRIVATE:
         others = [pid2 for pid2 in G.active_pids(game) if pid2 != pid]
         if others:
-            # 優先傳給「公開資訊推測為對立陣營」的玩家，不使用隱藏身份
             def _looks_hostile(pid2: str) -> bool:
                 inferred = _infer_identity(game, pid2)
                 if inferred is None:
@@ -134,13 +157,14 @@ def choose_transmit(game: dict, pid: str):
                     return True
                 if identity == G.VULTURE and inferred == G.BOARD:
                     return True
-                # 獨立投資人秘密多 → 對陣營玩家也構成威脅
                 if identity in (G.BOARD, G.VULTURE) and inferred == G.INDEPENDENT:
                     return True
                 return False
 
             hostile = [pid2 for pid2 in others if _looks_hostile(pid2)]
-            target = random.choice(hostile if hostile else others)
+            pool = hostile if hostile else others
+            # 優先傳給威脅程度最高（最接近勝利）的對手
+            target = max(pool, key=lambda p2: _threat_score(game, p2) + random.uniform(0, 0.15))
 
     return card["iid"], target
 
@@ -233,37 +257,34 @@ def choose_function_to_play(game: dict, pid: str, win) -> tuple:
                 if candidates:
                     return c["iid"], {"swap_iid": candidates[0]["iid"]}
 
-    # ── P4 惡意截胡 — 接收者進度快、且是同陣營或自己需要更多牌 ─────────
+    # ── P4 惡意截胡 — 敵人即將接收且快達成勝利條件時截胡 ───────────────
     if win and win["wtype"] == "pre_receive" and win["target"] != pid:
         c = f("惡意截胡")
         if c:
             tgt_pid = win["target"]
             tgt = game["players"].get(tgt_pid)
-            tgt_inf = _infer_identity(game, tgt_pid)
-            want = False
-            if tgt:
-                if identity == G.BOARD and tgt_inf == G.BOARD:
-                    want = G.count_blue(tgt) >= 1 and random.random() < 0.55
-                elif identity == G.VULTURE and tgt_inf == G.VULTURE:
-                    want = G.count_red(tgt) >= 1 and random.random() < 0.55
-                elif identity == G.INDEPENDENT:
-                    want = random.random() < 0.30
-            if want:
-                return c["iid"], {}
+            if tgt and hostile(tgt_pid):
+                threat = _threat_score(game, tgt_pid)
+                # 威脅值越高（越接近勝利）越積極截胡
+                threshold = 0.85 - threat * 0.5   # 接近勝利時 threshold 降低
+                if random.random() > threshold:
+                    return c["iid"], {}
+            elif tgt and identity == G.INDEPENDENT:
+                # 獨立投資人：只要自己還缺牌就截
+                prog, limit = _win_progress(game, pid)
+                if prog < limit and random.random() < 0.35:
+                    return c["iid"], {}
 
-    # ── P5 惡意干擾 — 阻止敵人接收（根據對方進度推斷威脅） ─────────────
+    # ── P5 惡意干擾 — 阻止敵人接收（威脅程度越高越積極阻止） ───────────
     if win and win["wtype"] == "pre_receive" and win["target"] != pid:
         c = f("惡意干擾")
         if c:
             tgt_pid = win["target"]
             tgt = game["players"].get(tgt_pid)
             if tgt and hostile(tgt_pid):
-                close_to_win = (
-                    (identity == G.BOARD   and G.count_blue(tgt) >= 2) or
-                    (identity == G.VULTURE and G.count_red(tgt)  >= 2) or
-                    random.random() < 0.20
-                )
-                if close_to_win:
+                threat = _threat_score(game, tgt_pid)
+                # 威脅值 ≥ 0.67（即 2/3）→ 必定干擾；更低則機率干擾
+                if threat >= 0.67 or random.random() < threat * 0.5 + 0.10:
                     return c["iid"], {}
 
     # ── P6 惡意帶風向 — 根據傳遞目標身份決定是否改向 ───────────────────
@@ -296,11 +317,16 @@ def choose_function_to_play(game: dict, pid: str, win) -> tuple:
 
     # ── 自己回合的主動技能 ────────────────────────────────────────────────
     if is_my_turn:
+        prog, limit = _win_progress(game, pid)
+        one_away = (prog >= limit - 1)
 
-        # P8 資源挹注 — 手牌少或有黑牌時補牌
+        # P8 資源挹注 — 快贏時必用；手牌少或有黑牌時高機率用
         c = f("資源挹注")
-        if c and (len(p["hand"]) <= 3 or G.count_black(p) >= 1) and random.random() < 0.6:
-            return c["iid"], {}
+        if c:
+            if one_away:
+                return c["iid"], {}   # 快贏，立刻補牌爭取最後一張
+            if (len(p["hand"]) <= 3 or G.count_black(p) >= 1) and random.random() < 0.6:
+                return c["iid"], {}
 
         # P9 吹哨者舉報 — 對危險玩家（快勝）或敵人強制棄牌
         c = f("吹哨者舉報")
