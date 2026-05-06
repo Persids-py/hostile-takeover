@@ -323,12 +323,13 @@ def choose_function_to_play(game: dict, pid: str, win) -> tuple:
         prog, limit = _win_progress(game, pid)
         one_away = (prog >= limit - 1)
 
-        # P8 資源挹注 — 快贏時必用；手牌少或有黑牌時高機率用
+        # P8 資源挹注 — 快贏時補牌，但牌庫過少或手牌已多時跳過（防循環）
         c = f("資源挹注")
         if c:
-            if one_away:
-                return c["iid"], {}   # 快贏，立刻補牌爭取最後一張
-            if (len(p["hand"]) <= 3 or G.count_black(p) >= 1) and random.random() < 0.6:
+            deck_ok = len(game.get("deck", [])) + len(game.get("discard_pile", [])) >= 5
+            if one_away and len(p["hand"]) <= 3 and deck_ok:
+                return c["iid"], {}
+            if (len(p["hand"]) <= 3 or G.count_black(p) >= 1) and deck_ok and random.random() < 0.6:
                 return c["iid"], {}
 
         # P9 吹哨者舉報 — 優先針對威脅最高的敵人強制棄最有利的牌

@@ -62,7 +62,8 @@ def _bot_tick(g: dict) -> bool:
             func_iid, func_extra = BOT.choose_function_to_play(g, cp, None)
             if func_iid:
                 ok, _, need_more = G.action_play_function(g, cp, func_iid, func_extra)
-                if ok and not need_more:
+                # 打完功能牌後若還在 choose_card，繼續執行傳牌（防止無限補牌循環）
+                if not ok or need_more or g["phase"] != G.PHASE_CHOOSE_CARD:
                     return True
             card_iid, target = BOT.choose_transmit(g, cp)
             if card_iid:
