@@ -90,25 +90,25 @@ ROLE_INFO = {
 
 CARD_TEMPLATES = [
     # 藍色機密 (共10張)
-    {"name": "盡職調查",   "color": BLUE,  "transmit": ENCRYPTED, "func": "盡職調查",   "count": 2, "desc": "【自己回合】秘密檢視一名玩家的機密區"},
-    {"name": "公開財報",   "color": BLUE,  "transmit": PUBLIC,    "func": "公開財報",   "count": 2, "desc": "【自己回合】隨機抽取他人一張手牌與你的一張互換"},
-    {"name": "資源挹注",   "color": BLUE,  "transmit": PUBLIC,    "func": "資源挹注",   "count": 2, "desc": "【自己回合】抽牌，黑牌越多抽越多"},
-    {"name": "法務攔截",   "color": BLUE,  "transmit": PRIVATE,   "func": "法務攔截",   "count": 2, "desc": "【響應鏈中】使最後一張功能牌無效"},
-    {"name": "吹哨者舉報", "color": BLUE,  "transmit": ENCRYPTED, "func": "吹哨者舉報", "count": 2, "desc": "【自己回合】看他人手牌並強制棄一張"},
+    {"name": "盡職調查",   "color": BLUE,  "transmit": ENCRYPTED, "func": "盡職調查",   "count": 8, "desc": "【自己回合】秘密檢視一名玩家的機密區"},
+    {"name": "公開財報",   "color": BLUE,  "transmit": PUBLIC,    "func": "公開財報",   "count": 4, "desc": "【自己回合】隨機抽取他人一張手牌與你的一張互換"},
+    {"name": "資源挹注",   "color": BLUE,  "transmit": PUBLIC,    "func": "資源挹注",   "count": 4, "desc": "【自己回合】抽牌，黑牌越多抽越多"},
+    {"name": "法務攔截",   "color": BLUE,  "transmit": PRIVATE,   "func": "法務攔截",   "count": 4, "desc": "【響應鏈中】使最後一張功能牌無效"},
+    {"name": "吹哨者舉報", "color": BLUE,  "transmit": ENCRYPTED, "func": "吹哨者舉報", "count": 4, "desc": "【自己回合】看他人手牌並強制棄一張"},
     # 紅色機密 (共10張)
-    {"name": "內線交易",   "color": RED,   "transmit": PRIVATE,   "func": "內線交易",   "count": 2, "desc": "【他人宣告傳出時】要求對方傳出指定顏色，否則看手牌"},
-    {"name": "惡意截胡",   "color": RED,   "transmit": ENCRYPTED, "func": "惡意截胡",   "count": 2, "desc": "【他人宣告接收時】將機密強行截至自己面前"},
-    {"name": "惡意干擾",   "color": RED,   "transmit": ENCRYPTED, "func": "惡意干擾",   "count": 2, "desc": "【他人宣告接收時】取消接收，機密繼續往下傳"},
-    {"name": "惡意帶風向", "color": RED,   "transmit": PUBLIC,    "func": "惡意帶風向", "count": 2, "desc": "【他人宣告傳遞目標時】強制改變傳遞目標"},
-    {"name": "惡意鎖定",   "color": RED,   "transmit": PRIVATE,   "func": "惡意鎖定",   "count": 2, "desc": "【任意時機】指定玩家本輪無法拒收"},
+    {"name": "內線交易",   "color": RED,   "transmit": PRIVATE,   "func": "內線交易",   "count": 4, "desc": "【他人宣告傳出時】要求對方傳出指定顏色，否則看手牌"},
+    {"name": "惡意截胡",   "color": RED,   "transmit": ENCRYPTED, "func": "惡意截胡",   "count": 4, "desc": "【他人宣告接收時】將機密強行截至自己面前"},
+    {"name": "惡意干擾",   "color": RED,   "transmit": ENCRYPTED, "func": "惡意干擾",   "count": 4, "desc": "【他人宣告接收時】取消接收，機密繼續往下傳"},
+    {"name": "惡意帶風向", "color": RED,   "transmit": PUBLIC,    "func": "惡意帶風向", "count": 4, "desc": "【他人宣告傳遞目標時】強制改變傳遞目標"},
+    {"name": "惡意鎖定",   "color": RED,   "transmit": PRIVATE,   "func": "惡意鎖定",   "count": 4, "desc": "【任意時機】指定玩家本輪無法拒收"},
     # 黑色機密 (共10張)
-    {"name": "有毒資產",   "color": BLACK, "transmit": ENCRYPTED, "func": None,         "count": 4, "desc": "累積三張即破產出局"},
-    {"name": "債務轉移",   "color": BLACK, "transmit": PUBLIC,    "func": "債務轉移",   "count": 2, "desc": "【機密傳至自己時】強制轉給指定玩家，對方無法拒收"},
-    {"name": "銷毀帳冊",   "color": BLACK, "transmit": PRIVATE,   "func": "銷毀帳冊",   "count": 2, "desc": "【任意時機】棄置場上任一玩家已接收的黑色機密"},
-    {"name": "偷天換日",   "color": BLACK, "transmit": ENCRYPTED, "func": "偷天換日",   "count": 2, "desc": "【私函退回傳出者時】替換成另一張牌改公開重傳"},
+    {"name": "有毒資產",   "color": BLACK, "transmit": ENCRYPTED, "func": None,         "count": 8, "desc": "累積三張即破產出局"},
+    {"name": "債務轉移",   "color": BLACK, "transmit": PUBLIC,    "func": "債務轉移",   "count": 4, "desc": "【機密傳至自己時】強制轉給指定玩家，對方無法拒收"},
+    {"name": "銷毀帳冊",   "color": BLACK, "transmit": PRIVATE,   "func": "銷毀帳冊",   "count": 4, "desc": "【任意時機】棄置場上任一玩家已接收的黑色機密"},
+    {"name": "偷天換日",   "color": BLACK, "transmit": ENCRYPTED, "func": "偷天換日",   "count": 4, "desc": "【私函退回傳出者時】替換成另一張牌改公開重傳"},
     # 雙色機密 (共5張)
-    {"name": "核心機密",   "color": DUAL,  "transmit": ENCRYPTED, "func": "核心機密",   "count": 3, "desc": "【任意時機】秘密偷看傳遞中的加密機密"},
-    {"name": "駭客入侵",   "color": DUAL,  "transmit": PRIVATE,   "func": "駭客入侵",   "count": 2, "desc": "【任意時機】秘密查看一名玩家的整副手牌"},
+    {"name": "核心機密",   "color": DUAL,  "transmit": ENCRYPTED, "func": "核心機密",   "count": 6, "desc": "【任意時機】秘密偷看傳遞中的加密機密"},
+    {"name": "駭客入侵",   "color": DUAL,  "transmit": PRIVATE,   "func": "駭客入侵",   "count": 4, "desc": "【任意時機】秘密查看一名玩家的整副手牌"},
 ]
 
 IDENTITY_POOLS = {
