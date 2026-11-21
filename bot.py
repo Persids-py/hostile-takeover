@@ -1,20 +1,16 @@
 # bot.py — 惡意併購 AI 電腦玩家邏輯
 
 import random
+from itertools import count
 import game as G
 
 BOT_NAMES = ["電腦·王大明", "電腦·李秘書", "電腦·張董事", "電腦·禿鷹先生", "電腦·神秘人"]
-_used_bot_names: set = set()
 
-def alloc_bot_name() -> str:
-    for n in BOT_NAMES:
-        if n not in _used_bot_names:
-            _used_bot_names.add(n)
-            return n
-    return f"電腦·{random.randint(100, 999)}"
-
-def free_bot_name(name: str):
-    _used_bot_names.discard(name)
+def alloc_bot_name(used_names: set[str]) -> str:
+    for name in BOT_NAMES:
+        if name not in used_names:
+            return name
+    return next(name for name in (f"電腦·{i}" for i in count(100)) if name not in used_names)
 
 # ── 顏色「不受歡迎度」評分表 ────────────────────────────────────────────────
 # 分數越高 = 越想擺脫（傳走或棄掉）；各身份的邏輯對稱。
@@ -172,10 +168,10 @@ def choose_transmit(game: dict, pid: str):
 
 
 def choose_discard(game: dict, pid: str) -> list:
-    """電腦選擇要棄掉哪幾張牌（棄至6張）。"""
+    """電腦依角色的手牌上限選擇要棄掉的牌。"""
     p = game["players"][pid]
     hand = p["hand"]
-    need = len(hand) - 6
+    need = len(hand) - p.get("hand_limit", 6)
     if need <= 0:
         return []
 

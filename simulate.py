@@ -108,11 +108,11 @@ def _bot_tick(g: dict) -> bool:
 def run_one(game_idx: int, verbose: bool) -> dict:
     g = G.new_game()
     pids = [f"p{i}" for i in range(7)]
-    names_used = []
+    names_used = set()
 
     for pid in pids:
-        name = BOT.alloc_bot_name()
-        names_used.append(name)
+        name = BOT.alloc_bot_name(names_used)
+        names_used.add(name)
         G.add_player(g, pid, name)
         g["players"][pid]["is_bot"] = True
 
@@ -131,9 +131,6 @@ def run_one(game_idx: int, verbose: bool) -> dict:
         print(f"\n  *** 卡住診斷 ***")
         print(f"  phase={g['phase']}")
         _dump_stuck(g)
-
-    for n in names_used:
-        BOT.free_bot_name(n)
 
     return _collect_stats(g, pids, step)
 
@@ -278,3 +275,4 @@ if __name__ == "__main__":
     if n_games > 1:
         _print_aggregate(results)
     print()
+    sys.exit(0 if all(result["finished"] for result in results) else 1)

@@ -135,6 +135,7 @@ def new_game():
         "pending_action": None,  # 等待玩家的動作
         "pending_funcs": {},     # iid → card（多步功能牌暫存）
         "log": [],
+        "log_seq": 0,
         "winner_pids": [],
         "win_reason": "",
     }
@@ -204,6 +205,7 @@ def discard_card(game, card):
 
 def _log(game, msg):
     game["log"].append(msg)
+    game["log_seq"] += 1
     if len(game["log"]) > 150:
         game["log"] = game["log"][-150:]
 
@@ -853,22 +855,20 @@ def action_transmit(game, pid, card_iid, target_pid=None):
     forced = p.get("forced_transmit_color")
     if forced and card["color"] != forced:
         return False, f"內線交易限制：必須傳出{_color_label(forced)}機密"
-    p["forced_transmit_color"] = None  # 傳出後解除限制
-
-    p["hand"].remove(card)
-
     mode = card["transmit"]
     face_up = (mode == PUBLIC)
 
     if mode == PRIVATE:
         if not target_pid or target_pid == pid:
             return False, "私人信件需指定其他玩家"
-        if target_pid not in game["players"] or game["players"][target_pid]["is_bankrupt"]:
+        if not isinstance(target_pid, str) or target_pid not in game["players"] or game["players"][target_pid]["is_bankrupt"]:
             return False, "無效目標"
         initial_target = target_pid
     else:
         initial_target = next_clockwise(game, pid)
 
+    p["forced_transmit_color"] = None
+    p["hand"].remove(card)
     game["transit"] = {
         "card": card,
         "mode": mode,
@@ -945,21 +945,24 @@ def action_refuse(game, pid):
     _continue_transit(game)
     return True, "ok"
 
+def _can_skip_transmit(player):
+    forced = player.get("forced_transmit_color")
+    return not player["hand"] or (forced is not None and not any(
+        card["color"] == forced for card in player["hand"]
+    ))
+
 def action_no_cards_skip(game, pid):
-    """邊緣情況：輪到玩家傳牌但手牌為空，強制跳過傳牌進入棄牌/結束回合。"""
+    """手牌為空或無法滿足內線交易時，可以跳過傳牌。"""
     if game["phase"] != PHASE_CHOOSE_CARD:
         return False, "現在不是選牌時機"
     if current_pid(game) != pid:
         return False, "不是你的回合"
     p = game["players"][pid]
-    forced = p.get("forced_transmit_color")
+    if not _can_skip_transmit(p):
+        return False, "你還有手牌，請選一張傳出"
+    p["forced_transmit_color"] = None
     if p["hand"]:
-        # 若有 forced_transmit_color 約束但手牌中已無符合顏色，允許跳過並解除約束
-        if forced and not any(c["color"] == forced for c in p["hand"]):
-            p["forced_transmit_color"] = None
-            _log(game, f"{p['name']} 無法滿足內線交易要求，跳過傳牌")
-        else:
-            return False, "你還有手牌，請選一張傳出"
+        _log(game, f"{p['name']} 無法滿足內線交易要求，跳過傳牌")
     else:
         _log(game, f"{p['name']} 手牌為空，跳過傳牌")
     _enter_discard_phase(game)
@@ -976,10 +979,13 @@ def action_discard(game, pid, card_iids):
     need_to_discard = len(p["hand"]) - limit
     if len(card_iids) != need_to_discard:
         return False, f"需要棄 {need_to_discard} 張牌"
+    cards = []
     for iid in card_iids:
         card = find_card_in_hand(p, iid)
-        if not card:
+        if not card or card in cards:
             return False, f"找不到牌 {iid}"
+        cards.append(card)
+    for card in cards:
         p["hand"].remove(card)
         discard_card(game, card)
     _log(game, f"{p['name']} 棄了 {len(card_iids)} 張牌")
@@ -1558,7 +1564,10 @@ def player_view(game, viewer_pid):
         }
         if pid == viewer_pid:
             entry["hand"] = p["hand"]
-            entry["role"] = p.get("role")
+            entry["hand_limit"] = p.get("hand_limit", 6)
+            entry["forced_transmit_color"] = p.get("forced_transmit_color")
+            entry["can_skip_transmit"] = (game["phase"] == PHASE_CHOOSE_CARD and
+                                          current_pid(game) == pid and _can_skip_transmit(p))
             entry["role_used"] = p.get("role_used", False)
             entry["role_task_progress"] = p.get("role_task_progress", {})
             entry["role_task_done"] = p.get("role_task_done", False)
@@ -1576,10 +1585,12 @@ def player_view(game, viewer_pid):
         "response_window": {
             "fid": win["fid"],
             "wtype": win["wtype"],
+            "target": win.get("target"),
             "triggered_by": win["triggered_by"],
             "waiting_for": win["waiting_for"],
         } if win else None,
         "log": game["log"][-30:],
+        "log_seq": game["log_seq"],
         "winner_pids": game["winner_pids"],
         "win_reason": game["win_reason"],
         "deck_count": len(game["deck"]),
